@@ -1,0 +1,20 @@
+# Run with all defaults.
+
+php artisan db:seed
+
+# Specify database connection.
+
+php artisan db:seed --database=staging
+
+# Specify a different seeder class.
+
+php artisan db:seed --seeder=ConfigurationSeeder
+
+# Force the seed while in production.
+
+php artisan db:seed --force
+
+# All together.
+
+php artisan db:seed --database=staging --seeder=ConfigurationSeeder --force
+

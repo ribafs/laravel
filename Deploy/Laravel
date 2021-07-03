@@ -1,0 +1,45 @@
+Laravel em VPS/Produção
+
+https://sujipthapa.co/blog/how-to-deploy-laravel-application-to-vps-server
+
+This works for me
+
+If you migrated .htaccess file from public directory to project folder and altered server.php to index.php in project folder then this should works for you.
+
+<link rel="stylesheet" href="{{ asset('public/css/app.css') }}" type="text/css">
+
+Mudei o início para
+
+<IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+#        Options -MultiViews -Indexes
+        Options -MultiViews -Indexes +FollowSymLinks
+    </IfModule>
+
+Laravel 7
+
+composer create-project --prefer-dist laravel/laravel:^7.30 blog
+cd blog
+composer require laravel/ui:^2.4
+php artisan ui bootstrap --auth
+npm install && npm run dev
+npm install vue-template-compiler --save-dev --production=false (opcional)
+npm audit fix --force
+rdb testes
+nano .env
+php artisan migrate
+http://localhost/blog/public/login
+
+
+Instalar no ribafs.me/lv
+
+
+Laravel 8
+
+composer create-project --prefer-dist laravel/laravel:^8.0 laravel
+cd laravel
+composer require laravel/jetstream
+php artisan jetstream:install livewire
+npm install && npm run prod
+
+

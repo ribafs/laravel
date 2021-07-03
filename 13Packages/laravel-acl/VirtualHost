@@ -1,0 +1,27 @@
+sudo nano /etc/apache2/sites-available/000-default.conf
+
+<VirtualHost *:80>
+        ServerName ribamar.net.br
+        ServerAlias www.ribamar.net.br
+        ServerAdmin ribafs@gmail.com
+
+        DocumentRoot /var/www/html
+
+        <Directory /var/www/html>
+               Order allow,deny
+               Allow from all
+               # New directive needed in Apache 2.4.3: 
+               Require all granted
+               Options Indexes FollowSymLinks
+               AllowOverride All
+        </Directory>
+
+        ErrorLog ${APACHE_LOG_DIR}/error.log
+        CustomLog ${APACHE_LOG_DIR}/access.log combined
+
+		RewriteEngine on
+		RewriteCond %{SERVER_NAME} =www.ribamar.net.br [OR]
+		RewriteCond %{SERVER_NAME} =ribamar.net.br
+		RewriteRule ^ https://%{SERVER_NAME}%{REQUEST_URI} [END,NE,R=permanent]
+</VirtualHost>
+

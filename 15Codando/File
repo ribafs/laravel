@@ -1,0 +1,188 @@
+Relação dos métodos da classe File com exemplos
+
+$file = '/var/www/html/index.php';
+readFile($file){
+
+Retorna o conteúdo completo de um arquivo
+
+File::readFile($file)
+
+readFileLine($file, $lineNumber){
+
+Retorna o conteúdo de uma linha de um arquivo
+
+File::readFileLine($file, 3)
+
+fileCountLines($file){
+
+Conta o número de linhas de um arquivo
+
+File::fileCountLines()
+
+readInverseFile($file){
+
+Ler de forma inversa (Do final para o começo) um arquivo, linha a linha
+
+File::readInverseFile($file)
+
+isFileReadable($file){
+
+Checar se arquivo pode ser lido pelo Apache
+
+File::isFileReadable($file)
+
+isFileWritable($file){
+
+Checar se arquivo tem permissão de escrita para o Apache
+
+File::isFileWritable($file)
+
+Zip($source, $destination)
+
+Compacta uma pasta recursivamente.
+
+File::Zip('/backup/www/testes', '/backup/www/resultado.zip')
+
+folderCopy( $source, $target ) {
+
+Copiar uma pasta com todos os arquivos e subpastas recursivamente
+
+File::folderCopy( '/var/www/html/joomla', /var/www/html/jom )
+
+fileDelete($file){
+
+Excluir um arquivo. Entrar com path full (/var/www/html/src.php) ou relativo ('../src.php')
+
+File::fileDelete($file)
+
+makeDir($dir){
+
+Criar um novo diretório. Entrar com path full (/var/www/html/dir1) ou relativo ('../dir1')
+
+File::makeDir('/var/www/html/portal')
+
+currentFile(){
+
+Retornar o nome do arquivo atual
+
+File::currentFile()
+
+currentDir(){
+
+Retornar o nome do diretório atual
+
+File::currentDir()
+
+dirSize(string $directory) {
+
+Retorna o tamanho de um diretório recursivamente em Bytes, KB, MB ou GB dependendo do tamanho
+
+print File::dirSize('/var/www/html/joomla');
+
+File 
+File::exists('path');
+File::get('path');
+File::getRemote('path');
+// Get a file's contents by requiring it
+File::getRequire('path');
+// Require the given file once
+File::requireOnce('path');
+// Write the contents of a file
+File::put('path', 'contents');
+// Append to a file
+File::append('path', 'data');
+// Delete the file at a given path
+File::delete('path');
+// Move a file to a new location
+File::move('path', 'target');
+// Copy a file to a new location
+File::copy('path', 'target');
+// Extract the file extension from a file path
+File::extension('path');
+// Get the file type of a given file
+File::type('path');
+// Get the file size of a given file
+File::size('path');
+// Get the file's last modification time
+File::lastModified('path');
+// Determine if the given path is a directory
+File::isDirectory('directory');
+// Determine if the given path is writable
+File::isWritable('path');
+// Determine if the given path is a file
+File::isFile('file');
+// Find path names matching a given pattern.
+File::glob($patterns, $flag);
+// Get an array of all files in a directory.
+File::files('directory');
+// Get all of the files from the given directory (recursive).
+File::allFiles('directory');
+// Get all of the directories within a given directory.
+File::directories('directory');
+// Create a directory
+File::makeDirectory('path',  $mode = 0777, $recursive = false);
+// Copy a directory from one location to another
+File::copyDirectory('directory', 'destination', $options = null);
+// Recursively delete a directory
+File::deleteDirectory('directory', $preserve = false);
+// Empty the specified directory of all files and folders
+File::cleanDirectory('directory');
+
+
+Para usar a biblioteca File precisamos adicionar no início da classe:
+```php
+use Illuminate\Support\Facades\File;
+
+File::copy(from_path, to_path);
+
+File::copyDirectory(__DIR__.'/form-directory', resource_path('to-directory'));
+
+mix.copyDirectory(__DIR__.'/form-directory', resource_path('to-directory'));
+
+ou
+\File::copyDirectory( public_path . 'to/the/app', resource_path('to/the/app'));
+
+now File::copyDirectory always overwrite files, if it can ignore existing file such as shell cp, it will be better.
+
+$ cp --help
+Usage: cp [OPTION]... [-T] SOURCE DEST
+Copy SOURCE to DEST, or multiple SOURCE(s) to DIRECTORY.
+
+  -i, --interactive            prompt before overwrite (overrides a previous -n
+                                  option)
+  -n, --no-clobber             do not overwrite an existing file (overrides
+                                 a previous -i option)
+
+framework/src/Illuminate/Filesystem/Filesystem.php
+
+public function copyDirectory($directory, $destination, $options = null) 
+
+
+File::makeDirectory($path);
+
+        if (!File::exists(app_path('Console/Commands'))){
+            File::makeDirectory(app_path('Console/Commands');           
+        }
+
+$seeder = base_path('database/seeders/DatabaseSeeder.php');
+if(File::exists($seeder)){
+    File::copy($seeder), base_path('database/seeders/DatabaseSeederBAK.php'));
+    File::copy(base_path('vendor/ribafs/laravel-acl/acl/seeders/DatabaseSeeder.php'), base_path('database/seeders/DatabaseSeeder.php'));
+}
+$route = base_path('routes/web.php');
+if(File::exists($route)){
+    File::copy($route), base_path('routes/webBAK.php');
+    File::copy(base_path('vendor/ribafs/laravel-acl/acl/web.php'), base_path('routes/web.php'));
+}
+$wel = base_path('resources/views/welcome.blade.php');
+if(File::exists($wel)){
+    File::copy($wel), base_path('resources/views/welcome.bladeBAK.php');
+    File::copy(base_path('vendor/ribafs/laravel-acl/acl/views/welcome.blade.php'), base_path('resources/views/welcome.blade.php'));
+}
+$app = base_path('resources/views/welcome.blade.php')
+if(File::exists($app)){
+    File::copy($wel), base_path('resources/views/welcome.bladeBAK.php');
+    File::copy(base_path('vendor/ribafs/laravel-acl/acl/views/layouts/app.blade.php'), base_path('resources/views/layouts/app.blade.php'));
+}
+```
+

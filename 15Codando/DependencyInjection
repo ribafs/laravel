@@ -1,0 +1,27 @@
+## Dependency Injection - DI
+
+É o processo de instanciar de forma simples uma classe dentro de outra
+
+Exemplo, onde $request é uma instância de Request
+```php
+    public function store(Request $request)
+    { 
+        $requestData = $request->all();        
+        Cliente::create($requestData);
+        return redirect('clientes')->with('flash_message', 'Cliente added!');
+    }
+```
+É semelhante a
+```php
+    public function store()
+    {
+        $request = new Request;
+        $requestData = $request->all();        
+        Cliente::create($requestData);
+        return redirect('clientes')->with('flash_message', 'Cliente added!');
+    }
+```
+No caso a classe Request precisa ser importada no início:
+use Illuminate\Http\Request; // Por padrão já vem noscontrollers criados com artisan
+
+

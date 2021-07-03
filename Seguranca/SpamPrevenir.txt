@@ -1,0 +1,46 @@
+Add Spam Prevention to Laravel Apps with Honey
+December 04, 2020 / Paul Redmond
+
+Honey is a package by Luke Downing that provides spam prevention tools like a honeypot, IP blocking, and reCaptcha integration.
+Honeypot Integration
+
+Honey makes it simple to start catching spam with its honeypot implementation. With this feature, a hidden input is part of the form that is not intended for users to fill out. Meanwhile, automated crawlers likely fill out all form inputs, which will trigger the Honey middleware on the backend.
+
+Here’s all it takes to get started with the honey package:
+
+<form action="{{ route('some.route') }}" method="POST">
+    @csrf
+    <input type="email" placeholder="Your email" required />
+    <x-honey/>
+    <button type="submit">Subscribe!</button>
+</form>
+
+Route::post('/test', fn() => event(new RegisterInterest))
+    ->middleware(['honey'])
+    ->name('some.route');
+
+Recaptcha
+
+Along with honeypot, the Honey plugin provides a Google reCaptcha integration that you can use with a middleware or even get more granular control. To get started you can do the following in your form:
+
+<form action="{{ route('some.route') }}" method="POST">
+    @csrf
+    <input type="email" placeholder="Your email" required />
+    <x-honey/>
+    <x-honey-recaptcha/>
+    <button type="submit">Subscribe!</button>
+</form>
+
+If you choose to use the middleware, it’ll abort requests that are from bots:
+
+Route::post('/test', fn() => event(new RegisterInterest))
+    ->middleware(['honey', 'honey-recaptcha'])
+    ->name('some.route');
+
+Learn More
+
+Honey provides hooks and other configuration options you can find in the readme. You can learn more about this package, get full installation instructions, and view the source code on GitHub.
+
+https://github.com/lukeraymonddowning/honey
+https://laravel-news.com/add-spam-prevention-to-laravel-apps-with-honey
+

@@ -1,0 +1,75 @@
+Nesta fase criaremos um site com umas 3 views
+Usando BootStrap 4 e um menu em uma delas para acessar as demais
+
+Usar um template de exemplo do BS para as views
+Criar o templates/master.blade.php
+Criar 3 views: 
+  - index.blade.php
+  - show.blade.php
+  - edit.blade.php
+
+Instalação limpa do Laravel
+
+laravel new views
+
+- Criar a pasta
+resources/views/templates
+
+- Criar o template
+resources/views/templates/master.blade.php
+
+Formar seu conteúdo adaptado do exemplo do BootStrap:
+https://getbootstrap.com/docs/4.5/examples/jumbotron/
+Apenas com head, body e final
+
+- Criar as views
+resources/views/empresa/index.blade.php
+resources/views/empresa/show.blade.php
+resources/views/empresa/edit.blade.php
+
+Criar o index.blade.php com:
+
+@section('title')
+  Trabalhando com Views no Laravel 7
+@endsection
+
+@extends('templates.master')
+
+@section('header')
+  <h1>Contabilidade</h1>
+@endsection
+
+@include('templates.content')
+
+Copiar para os outros dois, alterando apenas o header
+
+Criar o 
+
+- Criar o arquivo conteúdo
+resources/views/templates/content.blade.php
+Nele colar o conteúdo de um exemplo do BootStrap
+
+Criar assim: abrir o arquivo e digitar na primeira linha:
+
+@section('content')
+Logo em seguida copie e cole todo o código do exemplo acima do BS, exceto o conteúdo do master.blade.php
+E terminar com a linha:
+@endsection
+
+Copiar o favicon do BootStrap para a pasta public
+
+Criar as rotas
+
+Route::get('/index', function () {
+    return view('empresa.index');
+});
+
+Route::get('/show', function () {
+    return view('empresa.show');
+});
+
+Route::get('/edit', function () {
+    return view('empresa.edit');
+});
+
+

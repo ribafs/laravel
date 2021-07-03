@@ -1,0 +1,10 @@
+É importante frisar que os alias no laravel são “atalhos” para qualquer classe, não apenas facades. Você ainda pode acessar os facades diretamente, sem a necessidade do uso dos alias.
+
+Métodos estáticos em geral são difíceis de testar e criam dependências difíceis entre classes alem de quebrar princípios de OO. Você não pode estender métodos estáticos.
+Eles não são “horríveis”, mas você deve tomar cuidado ao usa-los.
+
+Service Container
+
+Resumidamente o Service Container é o carinha que guarda todas as instâncias dos objetos que vamos precisar durante o ciclo de desenvolvimento da nossa aplicação.
+
+

@@ -1,0 +1,207 @@
+Relacionamento de users com posts
+
+posts
+id
+title
+body
+user_id
+
+public function posts() {
+    return $this->hasMany('App\Models\Post', 'user_id');
+}
+
+One to one
+
+users com phones (supondo um para um)
+
+User.php
+public function phone() {
+    return $this->hasOne('App\Models\Phone');
+}
+
+Um fone pode ser associado a um user com
+$user->phone()->save( $phone );
+
+Relacionamento reverso
+
+Phone.php
+public function user() {
+    return $this->belongsTo('App\Models\User');
+}
+Um User pode ser associado a um fone usando:
+$phone->user()->associate( $user );
+
+One do Many
+
+Comments com posts
+
+Post.php
+public function comments() {
+    return $this->hasMany('App\Models\Comment');
+}
+Um Comment pode ser associado com um Post usando:
+$user->phone()->save( $phone );
+or
+$user->phone()->saveMany( $phones ); // Accepts array / Collection of phones
+
+Relacionamento reverso
+
+Comment.php
+public function post() {
+    return $this->belongsTo('App\Models\Post');
+}
+Um Comment pode ser associado com um Post usando:
+$phone->user()->associate( $user );
+
+Many to Many
+
+Users com Roles
+
+Tabela pivõ
+
+User.php
+public function roles() {
+    return $this->belongsToMany('App\Models\Role');
+}
+Um User pode ser associado com uma Role usando:
+$user->roles()->attach( $roles ); // Accepts a single / array of model(s) or id(s)
+
+Relacionamento reverso
+
+Role.php
+public function users() {
+    return $this->belongsToMany('App\Models\User');
+}
+A Role pode ser associada com um User usando:
+$role->users()->attach( $users ); // Accepts a single / array of model(s) or id(s)
+
+https://competa.com/laravel-eloquent-relationship-cheat-sheet
+
+
+For example, if your application contains users that may subscribe to podcasts, you probably have a many-to-many relationship between users and podcasts. If this is the case, you may wish to rename your intermediate table accessor to subscription instead of pivot. This can be done using the as method when defining the relationship:
+
+return $this->belongsToMany('App\Models\Podcast')
+                ->as('subscription')
+                ->withTimestamps();
+
+Once this is done, you may access the intermediate table data using the customized name:
+
+$users = User::with('podcasts')->get();
+
+foreach ($users->flatMap->podcasts as $podcast) {
+    echo $podcast->subscription->created_at;
+}
+
+
+$books = App\Models\Book::with('author')->get();
+
+foreach ($books as $book) {
+    echo $book->author->name;
+}
+
+
+Nested Eager Loading
+
+To eager load nested relationships, you may use "dot" syntax. For example, let's eager load all of the book's authors and all of the author's personal contacts in one Eloquent statement:
+
+$books = App\Models\Book::with('author.contacts')->get();
+
+
+Eager Loading Specific Columns
+
+You may not always need every column from the relationships you are retrieving. For this reason, Eloquent allows you to specify which columns of the relationship you would like to retrieve:
+
+$books = App\Models\Book::with('author:id,name')->get();
+
+
+If you would like to remove an item from the $with property for a single query, you may use the without method:
+
+$books = App\Models\Book::without('author')->get();
+
+
+Constraining Eager Loads
+
+Sometimes you may wish to eager load a relationship, but also specify additional query conditions for the eager loading query. Here's an example:
+
+$users = App\Models\User::with(['posts' => function ($query) {
+    $query->where('title', 'like', '%first%');
+}])->get();
+
+In this example, Eloquent will only eager load posts where the post's title column contains the word first. You may call other query builder methods to further customize the eager loading operation:
+
+$users = App\Models\User::with(['posts' => function ($query) {
+    $query->orderBy('created_at', 'desc');
+}])->get();
+
+
+The Create Method
+
+In addition to the save and saveMany methods, you may also use the create method, which accepts an array of attributes, creates a model, and inserts it into the database. Again, the difference between save and create is that save accepts a full Eloquent model instance while create accepts a plain PHP array:
+
+$post = App\Models\Post::find(1);
+
+$comment = $post->comments()->create([
+    'message' => 'A new comment.',
+]);
+
+You may use the createMany method to create multiple related models:
+
+$post = App\Models\Post::find(1);
+
+$post->comments()->createMany([
+    [
+        'message' => 'A new comment.',
+    ],
+    [
+        'message' => 'Another new comment.',
+    ],
+]);
+
+
+Many To Many Relationships
+
+Attaching / Detaching
+
+Eloquent also provides a few additional helper methods to make working with related models more convenient. For example, let's imagine a user can have many roles and a role can have many users. To attach a role to a user by inserting a record in the intermediate table that joins the models, use the attach method:
+
+$user = App\Models\User::find(1);
+
+$user->roles()->attach($roleId);
+
+When attaching a relationship to a model, you may also pass an array of additional data to be inserted into the intermediate table:
+
+$user->roles()->attach($roleId, ['expires' => $expires]);
+
+Sometimes it may be necessary to remove a role from a user. To remove a many-to-many relationship record, use the detach method. The detach method will delete the appropriate record out of the intermediate table; however, both models will remain in the database:
+
+// Detach a single role from the user...
+$user->roles()->detach($roleId);
+
+// Detach all roles from the user...
+$user->roles()->detach();
+
+For convenience, attach and detach also accept arrays of IDs as input:
+
+$user = App\Models\User::find(1);
+
+$user->roles()->detach([1, 2, 3]);
+
+$user->roles()->attach([
+    1 => ['expires' => $expires],
+    2 => ['expires' => $expires],
+]);
+
+Syncing Associations
+
+You may also use the sync method to construct many-to-many associations. The sync method accepts an array of IDs to place on the intermediate table. Any IDs that are not in the given array will be removed from the intermediate table. So, after this operation is complete, only the IDs in the given array will exist in the intermediate table:
+
+
+Updating A Record On A Pivot Table
+
+If you need to update an existing row in your pivot table, you may use updateExistingPivot method. This method accepts the pivot record foreign key and an array of attributes to update:
+
+$user = App\Models\User::find(1);
+
+$user->roles()->updateExistingPivot($roleId, $attributes);
+
+

@@ -1,0 +1,25 @@
+Criar usuário restrito para laravel-acl demo
+
+create database laravel CHARACTER SET utf8 COLLATE utf8_general_ci;
+CREATE USER 'super@mail.org'@'localhost' IDENTIFIED BY '123456';
+GRANT ALL ON laravel.* TO 'super@mail.org'@'localhost';
+
+
+REVOKE INSERT,DELETE,UPDATE, GRANT OPTION, SELECT ON laravel.* FROM 'super@mail.org'@'localhost';
+
+Configurar o .env com o user super@mail.org com a senha 123456
+
+Efetuar as migrations
+
+Então mudar os privilégios para
+REVOKE ALL ON laravel.* FROM 'super@mail.org'@'localhost';
+GRANT SELECT ON laravel.* TO 'super@mail.org'@'localhost';
+GRANT ALL ON laravel.sessions TO 'super@mail.org'@'localhost';
+
+SHOW PRIVILEGES
+
+SHOW GRANTS;
+SHOW GRANTS FOR CURRENT_USER;
+SHOW GRANTS FOR CURRENT_USER();
+
+

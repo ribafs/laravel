@@ -1,0 +1,217 @@
+Laravel Check If Value Exists in Collection Example
+
+In this tute, we will discuss laravel eloquent collection contains. i would like to show you laravel eloquent if contains. This article will give you simple example of laravel collection containsStrict example. you can see laravel collection check if empty.
+
+I will give you some examples of how to check value is exists or not in collection in laravel. you can easily add array in laravel 5, laravel 6 and laravel 7.
+
+Let's see example:
+
+Example 1: Laravel Collection Contains Example
+```php
+public function index()
+{
+    $collection = collect([
+            'Mumbai',
+            'New York',
+            'London',
+            'Rajkot'
+        ]);
+   
+    $collection->contains('Rajkot');  /* true */
+
+    $collection->contains('Paris');   /* false */
+}
+```
+Example 2: Laravel Collection Contains with Key Value Check
+```php
+public function index()
+{
+    $collection = collect([
+            ['id'=>1, 'name'=>'Hardik'],
+            ['id'=>2, 'name'=>'Vimal'],
+            ['id'=>3, 'name'=>'Harshad'],
+            ['id'=>4, 'name'=>'Harsukh'],
+        ]);
+  
+    $collection->contains('name', 'Harshad'); /* true */
+  
+    $collection->contains('name', 'Mahesh'); /* false */
+}
+```
+
+Example 3: Laravel Eloquent with Collection Contains
+```php
+public function index()
+{
+    Product::create(['name'=>'Silver', 'price'=>150]);
+    Product::create(['name'=>'Bronze', 'price'=>250]);
+    Product::create(['name'=>'Gold', 'price'=>50]);
+    Product::get()->contains('name', 'Gold'); /* true */
+    Product::get()->contains('name', 'Red');  /* false */
+    Product::get()->contains('price', 50);  /* true */
+}
+```
+Example 4: Laravel Collection Contains with function
+```php
+public function index()
+{
+    Product::create(['name'=>'Silver', 'price'=>150]);
+    Product::create(['name'=>'Bronze', 'price'=>250]);
+    Product::create(['name'=>'Gold', 'price'=>50]);
+    Product::get()->contains(function($key, $value) {
+        return $value->price > 100;
+    }); // true
+
+}
+```
+Example 5: Laravel Collection Contains with function
+```php
+public function index()
+{
+    $collection = collect([100, 150, 200, 250, 300]);
+    $collection->containsStrict('150');  /* false */
+    $collection->containsStrict(150);  /* true */
+}
+```
+I hope it can help you...
+
+https://hdtuto.com/article/laravel-check-if-value-exists-in-collection-example
+
+Collection 
+// Creating Collections
+collect([1, 2, 3]);
+// Simply returns the underlying array represented by the collection:
+$collection->all();
+// Returns the average of all items in the collection:
+$collection->avg();
+// Breaks the collection into multiple, smaller collections of a given size:
+$collection->chunk(4);
+// Collapses a collection of arrays into a flat collection:
+$collection->collapse();
+// Determines whether the collection contains a given item:
+$collection->contains('New York');
+// Returns the total number of items in the collection:
+$collection->count();
+// Iterates over the items in the collection and passes each item to a given callback:
+$collection = $collection->each(function ($item, $key) {
+});
+// Creates a new collection consisting of every n-th element:
+$collection->every(4);
+// Pass offset as the second argument:
+$collection->every(4, 1);
+// Returns all items in the collection except for those with the specified keys:
+$collection->except(['price', 'discount']);
+// Filters the collection by a given callback:
+$filtered = $collection->filter(function ($item) {
+    return $item > 2;
+});
+// Returns the first element in the collection that passes a given truth test:
+collect([1, 2, 3, 4])->first(function ($key, $value) {
+    return $value > 2;
+});
+// Flattens a multi-dimensional collection into a single dimension:
+$flattened = $collection->flatten();
+// Swaps the collection's keys with their corresponding values:
+$flipped = $collection->flip();
+// Removes an item from the collection by its key:
+$collection->forget('name');
+// Returns a new collection containing the items:
+$chunk = $collection->forPage(2, 3);
+// Returns the item at a given key. If the key does not exist, null is returned:
+$value = $collection->get('name');
+// Groups the collection's items by a given key:
+$grouped = $collection->groupBy('account_id');
+// Determines if a given key exists in the collection:
+$collection->has('email');
+// Joins the items in a collection:
+$collection->implode('product', ', ');
+// Removes any values that are not present in the given array or collection:
+$intersect = $collection->intersect(['Desk', 'Chair', 'Bookcase']);
+// Returns true if the collection is empty:
+collect([])->isEmpty();
+// Keys the collection by the given key:
+$keyed = $collection->keyBy('product_id');
+// Pass a callback, which should return the value to key the collection by:
+$keyed = $collection->keyBy(function ($item) {
+    return strtoupper($item['product_id']);
+});
+// Returns all of the collection's keys:
+$keys = $collection->keys();
+// Returns the last element in the collection:
+$collection->last();
+// Iterates through the collection and passes each value to the given callback:
+$multiplied = $collection->map(function ($item, $key) {
+    return $item * 2;
+});
+// Return the maximum value of a given key:
+$max = collect([['foo' => 10], ['foo' => 20]])->max('foo');
+$max = collect([1, 2, 3, 4, 5])->max();
+// Merges the given array into the collection:
+$merged = $collection->merge(['price' => 100, 'discount' => false]);
+// Return the minimum value of a given key:
+$min = collect([['foo' => 10], ['foo' => 20]])->min('foo');
+$min = collect([1, 2, 3, 4, 5])->min();
+// Returns the items in the collection with the specified keys:
+$filtered = $collection->only(['product_id', 'name']);
+// Retrieves all of the collection values for a given key:
+$plucked = $collection->pluck('name');
+// Removes and returns the last item from the collection:
+$collection->pop();
+// Adds an item to the beginning of the collection:
+$collection->prepend(0);
+// Pass a second argument to set the key of the prepended item:
+$collection->prepend(0, 'zero');
+// Removes and returns an item from the collection by its key:
+$collection->pull('name');
+// Appends an item to the end of the collection:
+$collection->push(5);
+// Sets the given key and value in the collection:
+$collection->put('price', 100);
+// Returns a random item from the collection:
+$collection->random();
+// Pass an integer to random. If that integer is more than 1, a collection of items is returned:
+$random = $collection->random(3);
+// Reduces the collection to a single value:
+$total = $collection->reduce(function ($carry, $item) {
+    return $carry + $item;
+});
+// Filters the collection using the given callback:
+$filtered = $collection->reject(function ($item) {
+    return $item > 2;
+});
+// Reverses the order of the collection's items:
+$reversed = $collection->reverse();
+// Searches the collection for the given value and returns its key if found:
+$collection->search(4);
+// Removes and returns the first item from the collection:
+$collection->shift();
+// Randomly shuffles the items in the collection:
+$shuffled = $collection->shuffle();
+// Returns a slice of the collection starting at the given index:
+$slice = $collection->slice(4);
+// Sorts the collection:
+$sorted = $collection->sort();
+// Sorts the collection by the given key:
+$sorted = $collection->sortBy('price');
+// Removes and returns a slice of items starting at the specified index:
+$chunk = $collection->splice(2);
+// Returns the sum of all items in the collection:
+collect([1, 2, 3, 4, 5])->sum();
+// Returns a new collection with the specified number of items:
+$chunk = $collection->take(3);
+// Converts the collection into a plain PHP array:
+$collection->toArray();
+// Converts the collection into JSON:
+$collection->toJson();
+// Iterates over the collection:
+$collection->transform(function ($item, $key) {
+    return $item * 2;
+});
+// Returns all of the unique items in the collection:
+$unique = $collection->unique();
+// Returns a new collection with the keys reset to consecutive integers:
+$values = $collection->values();
+// Filters the collection by a given key / value pair:
+$filtered = $collection->where('price', 100);
+// Merges together the values of the given array with the values of the collection:
+$zipped = $collection->zip([100, 200]);

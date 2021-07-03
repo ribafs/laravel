@@ -1,0 +1,67 @@
+Como publicar aplicativo laravel em subdiretório de servidor ou em servidor de hospedagem compartilhada
+
+public
+- favicon.ico
+- index.php
+- robots.txt
+- web.config
+- .htaccess
+
+Mover estes arquivos para o raiz
+
+Deixe o .htaccess sem mexer
+
+Editar o index.php
+
+<?php
+
+use Illuminate\Contracts\Http\Kernel;
+use Illuminate\Http\Request;
+
+define('LARAVEL_START', microtime(true));
+
+if (file_exists(__DIR__.'/../storage/framework/maintenance.php')) {
+    require __DIR__.'/../storage/framework/maintenance.php';
+}
+
+//require __DIR__.'/../vendor/autoload.php';
+require __DIR__.'/vendor/autoload.php';
+
+//$app = require_once __DIR__.'/../bootstrap/app.php';
+$app = require_once __DIR__.'/bootstrap/app.php';
+
+$kernel = $app->make(Kernel::class);
+
+$response = tap($kernel->handle(
+    $request = Request::capture()
+))->send();
+
+$kernel->terminate($request, $response);
+
+
+Editar também o server.php
+
+<?php
+
+$uri = urldecode(
+    parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH)
+);
+if ($uri !== '/' && file_exists(__DIR__.'/public'.$uri)) {
+    return false;
+}
+
+//require_once __DIR__.'/public/index.php';
+require_once __DIR__.'/index.php';
+
+
+Criar o link simbólico do storage
+
+php artisan storage:link
+
+Criar uma rota
+
+Route::get('/storage/{extra}', function ($extra) {return redirect("/public/storage/$extra");})->where('extra', '.*');
+
+What this block of code would do is redirect all requests made to /storage/<anything> to /public/storage/<anything> without any hiccups.
+
+https://medium.com/backenders-club/how-to-host-a-laravel-project-on-a-shared-hosting-via-cpanel-d955d32c528e

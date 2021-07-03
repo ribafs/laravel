@@ -1,0 +1,105 @@
+Instalar laravel em subdiretório do servidor
+
+Isso expõe as informações
+
+Veja só isso
+http://172.104.23.54/laravel/.env
+http://172.104.23.54/laravel/.git
+...
+DB_USERNAME=super@mail.org
+DB_PASSWORD=123456
+...
+Caso instale em subdiretório não deixe nenhum dos arquivos .algo, pois fical acessíveis pelo navegador, como arquivos texto.
+Use o .htaccess para negar o acesso d os mesmos. Melhor ainda é movê-los para um diretório antes e conf o laravel para acessá-los.
+
+Instalando laravel em subdiretório
+
+/var/www/html/laravel
+
+O html é o raiz da web e seu domínio aponta para ele.
+
+Supondo criar um aplicativo em /var/www/html/laravel
+
+O conteúdo do public fica em:
+
+/var/www/html/laravel (públic)
+
+O restante em
+
+/var/www/laravel (inacessível)
+
+/var/www/html/laravel:
+/css/
+/js/
+index.php
+composer.json
+composer.lock
+package.json
+package-lock.json
+webpack.mix.js
+node_modules
+
+Todo o restante em
+
+/var/www/laravel/
+/var/www/laravel/app/
+/var/www/laravel/bootstrap/
+/var/www/laravel/.env
+/var/www/laravel/...
+
+Edite o 
+/var/www/html/blog/index.php
+
+blog/index.php deve apontar para /var/www/laravel/
+
+laravel ficou em ../../laravel
+
+if (file_exists(__DIR__.'/../storage/framework/maintenance.php')) { // /../../laravel/storage/framework/maintenance.php
+    require __DIR__.'/../storage/framework/maintenance.php';
+}
+
+require __DIR__.'/../vendor/autoload.php';// /../../laravel/vendor/autoload.php
+
+$app = require_once __DIR__.'/../bootstrap/app.php'; // /../../laravel/bootstrap/app.php
+
+
+
+require __DIR__.'/../bootstrap/autoload.php';
+$app = require_once __DIR__.'/../bootstrap/app.php';
+
+Isso manterá qualquer coisa fora do /var/www/html, tornando sua instalação mais segura e prevenindo acessos não autorizados
+
+https://laravel-news.com/subfolder-installl
+
+-------
+Criar em
+/var/www/html/
+
+.htaccess
+    RedirectMatch ^/$ /laravel/public/
+
+Em cada projeto do laravel no raiz criar
+
+.htacces
+    RedirectMatch ^/$ /public/
+
+Criar um link simbólico de lv para o raiz
+
+ln -s /var/www/html/laravel/public /var/www/html
+
+Criar em /var/www/html
+
+.htaccess
+    RedirectMatch ^/$ /lv/public/
+
+You can place your separate folders in your subdomain with no problem. The important thing is that you need to point the browser to public/ folder under your laravel projects.
+
+You can create a .htaccess file with the command below in root folder of each project and perform a redirect.
+
+Place the following command in your .htaccess file: RedirectMatch ^/$ /public/
+
+
+I have got some experience with hosting laravel projects on shared hosting. Just copy the whole content of project/public folder a put it inside the project_name directory on the server. Then copy the rest of your project folder content inside laravel directory (which you create and put somewhere on your server, you do not have to copy node_modules directory). Afterwards go to project_name directory on the server and open index.php file. You need to change those 2 paths which are there so they point to the right location of autoload.php and app.php files on your server. I judt did the same while installing tutu vip app on my server.
+
+Hope I helped you a bit :)
+

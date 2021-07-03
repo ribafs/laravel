@@ -1,0 +1,8 @@
+A cada altereação do aplicativo guardar um backup do mesmo
+Na pasta backup (compactar todos os arquivos, inclusive os ocultos, teclar Ctrl+H antes)
+
+Geralmente quando aparecer algum erro que aparentemente não fez nada para isso. Executar
+
+crearall
+
+

@@ -1,0 +1,39 @@
+medbra
+
+roles
+- admin
+- medico
+- paciente
+
+users
+- id
+- name
+- email')->unique();
+- timestamp('email_verified_at')->nullable();
+- password
+- rememberToken();
+- text('profile_photo_path')->nullable();
+- timestamps();
+
+medico
+  `enderco` varchar(200) nullable
+  `crm` varchar(15) NOT nullable
+  `cidade` varchar(100) nullable
+  `cep` varchar(8) NOT nullable
+  `estado` varchar(2) nullable
+  `pais` varchar(20) nullable
+  `especialidade` varchar(40) nullable
+paciente
+  `cpf` varchar(11) NOT NULL,
+  `anamnese` text CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+Não precisa, os relacionamentos cuidam disso, que seria a role
+  `tipo` int NOT NULL DEFAULT '0'
+
+            $table->id();
+            $table->string('name');
+            $table->string('email')->unique();
+            $table->timestamp('email_verified_at')->nullable();
+            $table->string('password');
+            $table->rememberToken();
+            $table->text('profile_photo_path')->nullable();
+            $table->timestamps();

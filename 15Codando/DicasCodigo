@@ -1,0 +1,17 @@
+Mostrar user logado (numa view)
+
+@if(Auth::check())
+    <h5 class="mb-0 text-white nav-user-name">
+        {{ Auth::user()->name }}
+        {{ Auth::user()->email }}
+    </h5>
+@endif
+
+Efetuar logout do user
+
+@if(Auth::check())
+    <h5 class="mb-0 text-white nav-user-name">
+        {{ Auth::logout() }}
+    </h5>
+@endif
+

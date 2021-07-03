@@ -1,0 +1,56 @@
+Deploy
+
+Como colocar uma aplicação Laravel em produção e automatizar o processo de deploy
+
+O Laravel é um dos frameworks mais falados da web. Existem milhares de posts na internet ensinando como fazer basicamente tudo, porém, até hoje pouco vi falar sobre uma coisa simples: o que precisamos fazer para colocar uma aplicação de forma correta em prod
+
+Configurando o .env
+
+No arquivo .env colocamos as configurações do ambiente específico que vamos rodar a aplicação. Em ambiente de produção dois itens desse arquivo devem obrigatoriamente ser alterados para a segurança da aplicação:
+
+APP_ENV=production
+APP_DEBUG=false
+
+O APP_ENV informa qual o nome do ambiente que estamos executando a aplicação. O aconselhável em produção é definir o valor production. Isso porque o Laravel tem uma serie de proteção quando ele está configurado assim. Veja por exemplo o que acontece se tentarmos rodar as migrations com essa diretiva em produção:
+
+rodar migrations em producao
+
+O APP_DEBUG indica para o Laravel se ele deve mostrar erros no navegador. Exibir informações de erro é extremamente perigoso, um usuário mal intencionado pode obter diversas informações a partir dele. Por esse motivo sempre devemos deixar como false, assim ele mostrará apenas a mensagem informando que aconteceu algo de errado:
+
+Mensagem de erro para o usuário laravel
+
+Se precisar saber quais erros estão acontecendo em produção pode verificar o arquivo de log do Laravel.
+Laravel - Framework PHP (Parte 2/3)
+Curso de Laravel - Framework PHP (Parte 2/3)
+CONHEÇA O CURSO
+Instalando as dependências
+
+Ao clonar a aplicação para nosso servidor de produção, a primeira coisa que precisamos fazer é executar o composer para baixar as dependências do projeto. Quando estamos em produção podemos passar dois parâmetros extras, veja como fica o comando:
+
+composer install --optimize-autoload --no-dev
+
+–optimize-autoload: gera uma versão das regras do PSR-4/PSR-0 em um arquivo PHP único, evitando que a linguagem tenha que o olhar no sistema de arquivos. Esse arquivo de classmap pode ser facilmente cacheado pelo opcache tornando a obtenção dos caminhos muito mais rápido. Mais detalhes em autoloader-optimization
+
+–no-dev: ignora as dependências exclusivas do ambiente de desenvolvimento
+Cacheando os arquivos de configuração
+
+Acessar o arquivo .env toda hora é muito custoso, uma vez que ele é um arquivo de texto e não pode ser cacheado pelo opcache. Baseado nisso, o Laravel possui um comando que copia as configurações dele para um arquivo php único diminuindo assim o custo de acesso. Para isso temos o comando:
+
+php artisan config:cache
+
+Único detalhe que devemos ficar atentos quando executamos esse comando. Como as configurações do arquivo de configuração .env são carregados para o arquivo único, não é aconselhável usar o helper env() do Laravel que pega as configurações do arquivo .env já que ele pode não ser carregado.
+Cacheando as rotas
+
+O Laravel possui um comando que serializa todas as rotas da aplicação. Esses dados são passados para um único método em um arquivo cacheado. Isso diminui o tempo de carregamento das rotas da aplicação:
+
+php artisan route:cache
+
+O comando acima só funciona se não houver nenhuma chamada de função anônima nos arquivos de rota. A chamada de funções anônimas no arquivo de rota não é uma boa prática por padrão, o cache de rotas é mais um motivo para não usarmos.
+Outro processos
+
+Essas são alguma práticas que podemos adotar na hora de realizar o deploy da nossa aplicação. Muitas outras podem ser aplicadas no seu deploy, como, rodar o Laravel Mix ou algum outro automatizador de tarefas, executar testes e outros detalhes.
+
+Veja abaixo de forma prática alguns modos de automatizar os processos mostrados nesse post:
+
+https://www.treinaweb.com.br/blog/como-colocar-uma-aplicacao-laravel-em-producao-e-automatizar-o-processo-de-deploy/
+

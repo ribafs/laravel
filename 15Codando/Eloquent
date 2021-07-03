@@ -1,0 +1,788 @@
+Eloquent
+
+O framework Laravel é empacotado com o Eloquent Object Relational Mapper (ORM), que fornece uma maneira extremamente fácil de se comunicar com um banco de dados. Como os desenvolvedores precisam criar sites complexos e outros aplicativos, eles preferem um tempo de desenvolvimento mais curto e descomplicado. O Laravel ajuda a agilizar o desenvolvimento e oferece uma solução adequada para a maioria dos problemas encontrados. Os diversos requisitos de negócios são atendidos com desenvolvimento mais rápido, bem como código bem organizado, reutilizável, sustentável e escalonável. Ele funciona com aplicativos da web personalizados, pois pode atender a vários bancos de dados e realizar operações de banco de dados comuns.
+
+Como funciona o Eloquent?
+
+Os desenvolvedores podem trabalhar no Eloquent com vários bancos de dados de maneira eficiente, usando uma implementação ActiveMethod. É um padrão arquitetônico onde o modelo criado na estrutura MVC corresponde a uma tabela no banco de dados. A vantagem é que os modelos executam operações de banco de dados comuns sem codificar consultas SQL longas. Os modelos permitem a consulta de dados em suas tabelas, bem como a inserção de novos registros nas tabelas. O processo de sincronização de vários bancos de dados em execução em sistemas diferentes é simplificado. Não há necessidade de escrever consultas SQL. Tudo que você precisa fazer é definir as tabelas do banco de dados e as relações entre elas, e o Eloquent fará o resto do trabalho.
+
+Criar registro
+
+  $client = new \App\Client;
+  $client->nome = 'João Brito';
+  $client->email = 'joao@joao.org';
+  $client->save();
+
+Ler todos os registros
+
+return \App\Models\Client::all();
+
+Retornar alguns registros
+
+return \App\Cliente::where('id', '<', 5)->get();
+
+Retornar primeiro registro de sonsulta
+
+return \App\Cliente::where('id', '<', 5)->first();
+
+Retornar registro
+
+return \App\Cliente::where('id', '<', 5)->where('nome', '=', 'João Brito')->get();
+
+Foreach
+
+ $results = \App\Cliente::where('id', '<',5)->get();
+  if(count($results) > 0)
+  {
+    foreach($results as $cliente){
+      echo 'Cliente: ' . $cliente->nome . ' - ID:' . $cliente->id . ' <br/>';
+    }
+  }
+  else
+  echo 'No Results!';
+
+Atualizar
+
+$cliente = \App\Cliente::find(2);
+  $cliente->nome = 'Pedro Sousa';
+  $cliente->id = 2;
+  $cliente->save();
+
+Delete
+
+return \App\Cliente::find(3)->delete();
+
+Outros
+
+ $results = \App\Book::where('title', 'LIKE', '%Second%')
+    ->orWhere('pages_count', '>', 140)
+    ->get();
+
+  $results = \App\Book::where(function($query){
+    $query
+      ->where('pages_count', '>', 120)
+      ->where('title', 'LIKE', '%Book%');
+  })->orWhere(function($query){
+    $query
+      ->where('pages_count', '<', 200)
+      ->orWhere('description', '=', '');
+  })->get();
+  return $results;
+
+  $results = \App\Book::where(function($query){
+    $query
+      ->where(function($query){
+      // other conditions here...
+      $query->where(function($query){
+        // deeper and deeper in the seas of conditions...
+      });
+    })
+    ->orWhere('field', 'operator', 'condition');
+  })->orWhere(function($query){
+    $query
+      ->where('field', 'operator', 'condition')
+      ->orWhere(function($query){
+    // other conditions here...
+      });
+  })->get();
+  return $results;
+
+Pesquisar por Livros que não existem
+$booksThatDontExist = \App\Book::whereNull('title')->get();
+
+Route::get('book_get_where', function(){
+  $result = \App\Book::wherePagesCount(1000)->first();
+  return $result;
+});
+
+Route::get('book_get_books_count', function(){
+  $booksCount = \App\Book::count();
+  return $booksCount;
+});
+
+Route::get('book_get_books_avg_price', function(){
+  $avgPrice = \App\Book::where('title', 'LIKE', '%Book%')->avg('price');
+  return $avgPrice;
+});
+
+Route::get('book_get_books_avg_price', function(){
+  $countTotal = \App\Book::where('pages_count', '>',100)->avg('price');
+  return $countTotal;
+});
+
+// orderBy
+\App\Book::orderBy('title', 'asc')->get();
+// groupBy
+\App\Book::groupBy('price')->get();
+// having
+\App\Book::having('count', '<', 20)->get();
+
+$book = new \App\Book($request->all());
+// or...
+$book = \App\Book:create($request->all());
+
+Especificando formato de data no model
+
+<?php
+namespace App;
+
+class Book extends Model {
+  protected $table = 'books'';
+  protected function getDateFormat()
+  {
+    // returining a different timestamp format!
+    return 'd/m/Y';
+  }
+}
+
+Consultas aninhadas
+
+Use isto para reduzir código repetido.
+<?php
+// getting cheaper and longer books;
+$cheapAndLongBooks = \App\Book::cheap()->long()->get();
+
+// getting most expensive and longer books;
+$expensiveAndLongBooks = \App\Book::expensive()->long()->get();
+
+// getting cheaper and shorter books;
+$cheapAndShortBooks = \App\Book::cheap()->short()->get();
+
+// getting expensive and shorter books;
+$expensiveAndShortBooks = \App\Book::expensive()->short()->get();
+
+-----------
+
+Eloquent Model
+
+Generating a new model
+
+php artisan make:model BlogPost
+
+Generating a new model with migration
+
+php artisan make:model BlogPost --migration
+// or
+php artisan make:model BlogPost -m
+
+By convention, Laravel assumes the table name is "snake case" plural model name. For example:
+Model name 	Table name
+BlogPost 	blog_posts
+Blogpost 	blogposts
+VeryLongTrain 	very_long_trains
+
+To define a custom name, add (override) the protected $table model property
+
+class BlogPost extends Model
+{
+    protected $table = 'blogposts';
+}
+
+By default, all models are stored inside the App namespace, eg. App\BlogPost
+Acessing and modifying properties
+
+You can read and modify model properties (row columns) using properties
+
+$post = App\BlogPost::find(1);
+$title = $post->title;
+$content = $post->content;
+
+$post->title = 'New title';
+$post->content = 'New content';
+// Always call save() to create the record and UPDATE the existing one
+$post->save();
+
+Property name corresponds 1:1 to the column name of the table
+Querying
+
+Retrieving all models as collection
+
+$posts = App\BlogPost::all();
+
+Retrieving single model by primary key (usually, by id property/column)
+
+// Fetch BlogPost with id 10
+$post = App\BlogPost::find(10);
+
+Fetching collection of models by id
+
+$posts = App\BlogPost::find([1, 2, 3]);
+
+Collections are iterable (eg. using foreach)
+
+$posts = App\BlogPost::all();
+
+foreach ($posts as $post) {
+	echo $post->title;
+}
+
+Getting first element of the collection of models
+
+$posts = App\BlogPost::all();
+$post = $posts->first();
+
+Creating and saving (creating a database row) a new model
+
+$post = new App\BlogPost();
+$post->title = 'Title';
+$post->content = 'Content';
+$post->save();
+
+https://github.com/piotr-jura-udemy/laravel-cheat-sheet/blob/master/docs/0009-models-eloquent.md
+
+# 20 Laravel Eloquent Tips and Tricks
+
+Eloquent ORM seems like a simple mechanism, but under the hood, there’s a lot of semi-hidden functions and less-known ways to achieve more with it. In this article, I will show you a few tricks.
+
+1. Increments and Decrements
+
+Instead of this:
+```php
+$article = Article::find($article_id);
+$article->read_count++;
+$article->save();
+```
+You can do this:
+```php
+$article = Article::find($article_id);
+$article->increment('read_count');
+```
+Also these will work:
+```php
+Article::find($article_id)->increment('read_count');
+Article::find($article_id)->increment('read_count', 10); // +10
+Product::find($produce_id)->decrement('stock'); // -1
+```
+2. XorY methods
+
+Eloquent has quite a few functions that combine two methods, like “please do X, otherwise do Y”.
+
+Example 1 – findOrFail():
+
+Instead of:
+```php
+$user = User::find($id);
+if (!$user) { abort (404); }
+```
+Do this:
+```php
+$user = User::findOrFail($id);
+```
+Example 2 – firstOrCreate():
+
+Instead of:
+```php
+$user = User::where('email', $email)->first();
+if (!$user) {
+  User::create([
+    'email' => $email
+  ]);
+}
+```
+Do just this:
+
+firstOrCreate - método papra criar models usando o atributo de atribuição em massa.
+
+O método firstOrCreate tentará localizar um registro no banco de dados usando os pares campo/valor fornecidos. Caso o modelo não seja encontrado no banco de dados, será inserido um registro com os atributos do primeiro parâmetro, junto com os do segundo parâmetro opcional.
+```php
+$user = User::firstOrCreate(['email' => $email]);
+```
+3. Model boot() method
+
+There is a magical place called boot() in an Eloquent model where you can override default behavior:
+```php
+class User extends Model
+{
+    public static function boot()
+    {
+        parent::boot();
+        static::updating(function($model)
+        {
+            // do some logging
+            // override some property like $model->something = transform($something);
+        });
+    }
+}
+```
+Probably one of the most popular examples is setting some field value at the moment of creating the model object. Let’s say you want to generate UUID field at that moment.
+```php
+public static function boot()
+{
+  parent::boot();
+  self::creating(function ($model) {
+    $model->uuid = (string)Uuid::generate();
+  });
+}
+```
+4. Relationship with conditions and ordering
+
+This is a typical way to define relationship:
+```php
+public function users() {
+    return $this->hasMany('App\User');
+}
+```
+But did you know that at this point we can already add where or orderBy?
+For example, if you want a specific relationship for some type of users, also ordered by email, you can do this:
+```php
+public function approvedUsers() {
+    return $this->hasMany('App\User')->where('approved', 1)->orderBy('email');
+}
+```
+5. Model properties: timestamps, appends etc.
+
+There are a few “parameters” of an Eloquent model, in the form of properties of that class. The most popular ones are probably these:
+```php
+class User extends Model {
+    protected $table = 'users';
+    protected $fillable = ['email', 'password']; // which fields can be filled with User::create()
+    protected $dates = ['created_at', 'deleted_at']; // which fields will be Carbon-ized
+    protected $appends = ['field1', 'field2']; // additional values returned in JSON
+}
+```
+But wait, there’s more:
+```php
+protected $primaryKey = 'uuid'; // it doesn't have to be "id"
+public $incrementing = false; // and it doesn't even have to be auto-incrementing!
+protected $perPage = 25; // Yes, you can override pagination count PER MODEL (default 15)
+const CREATED_AT = 'created_at';
+const UPDATED_AT = 'updated_at'; // Yes, even those names can be overridden
+public $timestamps = false; // or even not used at all
+```
+And there’s even more, I’ve listed the most interesting ones, for more please check out the code of default abstract Model class and check out all the traits used.
+
+6. Find multiple entries
+
+Everyone knows the find() method, right?
+```php
+$user = User::find(1);
+```
+I’m quite surprised how few people know about that it can accept multiple IDs as an array:
+```php
+$users = User::find([1,2,3]);
+```
+7. WhereX
+
+There’s an elegant way to turn this:
+```php
+$users = User::where('approved', 1)->get();
+```
+Into this:
+```php
+$users = User::whereApproved(1)->get(); 
+```
+Yes, you can change the name of any field and append it as a suffix to “where” and it will work by magic.
+
+Also, there are some pre-defined methods in Eloquent, related to date/time:
+```php
+User::whereDate('created_at', date('Y-m-d'));
+User::whereDay('created_at', date('d'));
+User::whereMonth('created_at', date('m'));
+User::whereYear('created_at', date('Y'));
+```
+8. Order by relationship
+
+A little more complicated “trick”. What if you have forum topics but want to order them by latest post? Pretty common requirement in forums with last updated topics on the top, right?
+
+First, describe a separate relationship for the latest post on the topic:
+```php
+public function latestPost()
+{
+    return $this->hasOne(\App\Post::class)->latest();
+}
+```
+And then, in our controller, we can do this “magic”:
+```php
+$users = Topic::with('latestPost')->get()->sortByDesc('latestPost.created_at');
+```
+9. Eloquent::when() – no more if-else’s
+
+Many of us write conditional queries with “if-else”, something like this:
+```php
+if (request('filter_by') == 'likes') {
+    $query->where('likes', '>', request('likes_amount', 0));
+}
+if (request('filter_by') == 'date') {
+    $query->orderBy('created_at', request('ordering_rule', 'desc'));
+}
+```
+But there’s a better way – to use when():
+```php
+$query = Author::query();
+$query->when(request('filter_by') == 'likes', function ($q) {
+    return $q->where('likes', '>', request('likes_amount', 0));
+});
+$query->when(request('filter_by') == 'date', function ($q) {
+    return $q->orderBy('created_at', request('ordering_rule', 'desc'));
+});
+```
+It may not feel shorter or more elegant, but the most powerful is passing of the parameters:
+```php
+$query = User::query();
+$query->when(request('role', false), function ($q, $role) { 
+    return $q->where('role_id', $role);
+});
+$authors = $query->get();
+```
+10. BelongsTo Default Models
+
+Let’s say you have Post belonging to Author and then Blade code:
+```php
+{{ $post->author->name }}
+```
+But what if the author is deleted, or isn’t set for some reason? You will get an error, something like “property of non-object”.
+
+Of course, you can prevent it like this:
+```php
+{{ $post->author->name ?? '' }}
+```
+But you can do it on Eloquent relationship level:
+```php
+public function author()
+{
+    return $this->belongsTo('App\Author')->withDefault();
+}
+```
+In this example, the author() relation will return an empty App\Author model if no author is attached to the post.
+
+Furthermore, we can assign default property values to that default model.
+```php
+public function author()
+{
+    return $this->belongsTo('App\Author')->withDefault([
+        'name' => 'Guest Author'
+    ]);
+}
+```
+11. Order by Mutator
+
+Imagine you have this:
+```php
+function getFullNameAttribute()
+{
+  return $this->attributes['first_name'] . ' ' . $this->attributes['last_name'];
+}
+```
+Now, you want to order by that full_name? This won’t work:
+```php
+$clients = Client::orderBy('full_name')->get(); // doesn't work
+```
+The solution is quite simple. We need to order the results after we get them.
+```php
+$clients = Client::get()->sortBy('full_name'); // works!
+```
+Notice that the function name is different – it’s not orderBy, it’s sortBy.
+
+12. Default ordering in global scope
+
+What if you want to have User::all() always be ordered by name field? You can assign a global scope. Let’s go back to the boot() method, which we mentioned already above.
+```php
+protected static function boot()
+{
+    parent::boot();
+
+    // Order by name ASC
+    static::addGlobalScope('order', function (Builder $builder) {
+        $builder->orderBy('name', 'asc');
+    });
+}
+```
+Read more about Query Scopes here.
+
+13. Raw query methods
+
+Sometimes we need to add raw queries to our Eloquent statements. Luckily, there are functions for that.
+```php
+// whereRaw
+$orders = DB::table('orders')
+    ->whereRaw('price > IF(state = "TX", ?, 100)', [200])
+    ->get();
+
+// havingRaw
+Product::groupBy('category_id')->havingRaw('COUNT(*) > 1')->get();
+
+// orderByRaw
+User::where('created_at', '>', '2016-01-01')
+  ->orderByRaw('(updated_at - created_at) desc')
+  ->get();
+```
+14. Replicate: make a copy of a row
+
+Short one. Without deep explanations, here’s the best way to make a copy of database entry:
+```php
+$task = Tasks::find(1);
+$newTask = $task->replicate();
+$newTask->save();
+```
+15. Chunk() method for big tables
+
+Not exactly Eloquent related, it’s more about Collection, but still powerful – to process bigger datasets, you can chunk them into pieces.
+
+Instead of:
+```php
+$users = User::all();
+foreach ($users as $user) {
+    // ...
+```
+You can do:
+```php
+User::chunk(100, function ($users) {
+    foreach ($users as $user) {
+        // ...
+    }
+});
+```
+16. Create additional things when creating a model
+
+We all know this Artisan command:
+```php
+php artisan make:model Company
+```
+But did you know there are three useful flags to generate related files to the model?
+```php
+php artisan make:model Company -mcr
+
+    -m will create a migration file
+    -c will create a controller
+    -r will indicate that controller should be resourceful
+```
+17. Override updated_at when saving
+
+Did you know that ->save() method can accept parameters? As a result, we can tell it to “ignore” updated_at default functionality to be filled with current timestamp. See this:
+```php
+$product = Product::find($id);
+$product->updated_at = '2019-01-01 10:00:00';
+$product->save(['timestamps' => false]);
+```
+Here we’re overriding default updated_at with our pre-defined one.
+
+18. What is the result of an update()?
+
+Have you ever wondered what this code actually returns?
+```php
+$result = $products->whereNull('category_id')->update(['category_id' => 2]);
+```
+I mean, the update is performed in the database, but what would that $result contain?
+
+The answer is affected rows. So if you need to check how many rows were affected, you don’t need to call anything else – update() method will return this number for you.
+
+19. Transform brackets into an Eloquent query
+
+What if you have and-or mix in your SQL query, like this:
+```php
+... WHERE (gender = 'Male' and age >= 18) or (gender = 'Female' and age >= 65)
+```
+How to translate it into Eloquent? This is the wrong way:
+```php
+$q->where('gender', 'Male');
+$q->orWhere('age', '>=', 18);
+$q->where('gender', 'Female');
+$q->orWhere('age', '>=', 65);
+```
+The order will be incorrect. The right way is a little more complicated, using closure functions as sub-queries:
+```php
+$q->where(function ($query) {
+    $query->where('gender', 'Male')
+        ->where('age', '>=', 18);
+})->orWhere(function($query) {
+    $query->where('gender', 'Female')
+        ->where('age', '>=', 65); 
+})
+```
+20. orWhere with multiple parameters
+
+Finally, you can pass an array of parameters to orWhere().
+“Usual” way:
+```php
+$q->where('a', 1);
+$q->orWhere('b', 2);
+$q->orWhere('c', 3);
+```
+You can do it like this:
+```php
+$q->where('a', 1);
+$q->orWhere(['b' => 2, 'c' => 3]);
+```
+If you enjoyed these Eloquent tips, check out my online course Eloquent: Expert Level and learn about creating relationships, querying data effectively and exploring Eloquent features that you may not know about.
+
+Filed in: Laravel Tutorials / Eloquent 
+
+October 27, 2018 / PovilasKorop
+
+https://laravel-news.com/eloquent-tips-tricks
+
+
+Model 
+Basic Usage 
+// Defining An Eloquent Model
+class User extends Model {}
+// generate Eloquent models
+php artisan make:model User
+// specify a custom table name
+class User extends Model {
+  protected $table = 'my_users';
+}
+          
+More
+Model::create(array('key' => 'value'));
+// Find first matching record by attributes or create
+Model::firstOrCreate(array('key' => 'value'));
+// Find first record by attributes or instantiate
+Model::firstOrNew(array('key' => 'value'));
+// Create or update a record matching attibutes, and fill with values
+Model::updateOrCreate(array('search_key' => 'search_value'), array('key' => 'value'));
+// Fill a model with an array of attributes, beware of mass assignment!
+Model::fill($attributes);
+Model::destroy(1);
+Model::all();
+Model::find(1);
+// Find using dual primary key
+Model::find(array('first', 'last'));
+// Throw an exception if the lookup fails
+Model::findOrFail(1);
+// Find using dual primary key and throw exception if the lookup fails
+Model::findOrFail(array('first', 'last'));
+Model::where('foo', '=', 'bar')->get();
+Model::where('foo', '=', 'bar')->first();
+Model::where('foo', '=', 'bar')->exists();
+// dynamic
+Model::whereFoo('bar')->first();
+// Throw an exception if the lookup fails
+Model::where('foo', '=', 'bar')->firstOrFail();
+Model::where('foo', '=', 'bar')->count();
+Model::where('foo', '=', 'bar')->delete();
+//Output raw query
+Model::where('foo', '=', 'bar')->toSql();
+Model::whereRaw('foo = bar and cars = 2', array(20))->get();
+Model::on('connection-name')->find(1);
+Model::with('relation')->get();
+Model::all()->take(10);
+Model::all()->skip(10);
+// Default Eloquent sort is ascendant
+Model::all()->orderBy('column');
+Model::all()->orderBy('column','desc');
+              
+Soft Delete 
+Model::withTrashed()->where('cars', 2)->get();
+// Include the soft deleted models in the results
+Model::withTrashed()->where('cars', 2)->restore();
+Model::where('cars', 2)->forceDelete();
+// Force the result set to only included soft deletes
+Model::onlyTrashed()->where('cars', 2)->get();
+              
+Relationships
+// One To One - User::phone()
+  return $this->hasOne('App\Phone', 'foreign_key', 'local_key');
+// One To One - Phone::user(), The Inverse Of The Relation
+return $this->belongsTo('App\User', 'foreign_key', 'other_key');
+
+// One To Many - Post::comments()
+return $this->hasMany('App\Comment', 'foreign_key', 'local_key');
+//  One To Many - Comment::post()
+return $this->belongsTo('App\Post', 'foreign_key', 'other_key');
+
+// Many To Many - User::roles();
+return $this->belongsToMany('App\Role', 'user_roles', 'user_id', 'role_id');
+// Many To Many - Role::users();
+return $this->belongsToMany('App\User');
+// Many To Many - Retrieving Intermediate Table Columns
+$role->pivot->created_at;
+// Many To Many - Pivot table with extra attributes
+return $this->belongsToMany('App\Role')->withPivot('column1', 'column2');
+// Many To Many - Automatically maintained created_at and updated_at timestamps
+return $this->belongsToMany('App\Role')->withTimestamps();
+
+// Has Many Through - Country::posts(), A Country model have
+// many Post models through an intermediate User model (User::country_id)
+return $this->hasManyThrough('App\Post', 'App\User', 'country_id', 'user_id');
+
+// Polymorphic Relations - Photo::imageable()
+return $this->morphTo();
+// Polymorphic Relations - Staff::photos()
+return $this->morphMany('App\Photo', 'imageable');
+// Polymorphic Relations - Product::photos()
+return $this->morphMany('App\Photo', 'imageable');
+// Polymorphic Relations - Register the morphMap in your AppServiceProvider
+Relation::morphMap([
+    'Post' => App\Post::class,
+    'Comment' => App\Comment::class,
+]);
+
+// Many To Many Polymorphic Relations - Tables: posts,videos,tags,taggables
+// Post::tags()
+return $this->morphToMany('App\Tag', 'taggable');
+// Video::tags()
+return $this->morphToMany('App\Tag', 'taggable');
+// Tag::posts()
+return $this->morphedByMany('App\Post', 'taggable');
+// Tag::videos()
+return $this->morphedByMany('App\Video', 'taggable');
+
+// Querying Relations
+$user->posts()->where('active', 1)->get();
+// Retrieve all posts that have at least one comment...
+$posts = App\Post::has('comments')->get();
+// Retrieve all posts that have three or more comments...
+$posts = Post::has('comments', '>=', 3)->get();
+// Retrieve all posts that have at least one comment with votes...
+$posts = Post::has('comments.votes')->get();
+// Retrieve all posts with at least one comment containing words like foo%
+$posts = Post::whereHas('comments', function ($query) {
+    $query->where('content', 'like', 'foo%');
+})->get();
+
+// Eager Loading
+$books = App\Book::with('author')->get();
+$books = App\Book::with('author', 'publisher')->get();
+$books = App\Book::with('author.contacts')->get();
+
+// Lazy Eager Loading
+$books->load('author', 'publisher');
+
+// Inserting Related Models
+$comment = new App\Comment(['message' => 'A new comment.']);
+$post->comments()->save($comment);
+// save multiple related models
+$post->comments()->saveMany([
+    new App\Comment(['message' => 'A new comment.']),
+    new App\Comment(['message' => 'Another comment.']),
+]);
+$post->comments()->create(['message' => 'A new comment.']);
+
+// Updating a belongsTo relationship
+$user->account()->associate($account);
+$user->save();
+$user->account()->dissociate();
+$user->save();
+
+// Inserting Related Models - Many To Many Relationships
+$user->roles()->attach($roleId);
+$user->roles()->attach($roleId, ['expires' => $expires]);
+// Detach a single role from the user...
+$user->roles()->detach($roleId);
+// Detach all roles from the user...
+$user->roles()->detach();
+$user->roles()->detach([1, 2, 3]);
+$user->roles()->attach([1 => ['expires' => $expires], 2, 3]);
+
+// Any IDs that are not in the given array will be removed from the intermediate table.
+$user->roles()->sync([1, 2, 3]);
+// You may also pass additional intermediate table values with the IDs:
+$user->roles()->sync([1 => ['expires' => true], 2, 3]);
+
+              
+Events
+Model::creating(function($model){});
+Model::created(function($model){});
+Model::updating(function($model){});
+Model::updated(function($model){});
+Model::saving(function($model){});
+Model::saved(function($model){});
+Model::deleting(function($model){});
+Model::deleted(function($model){});
+Model::observe(new FooObserver);
+              
+Eloquent Configuration
+// Disables mass assignment exceptions from being thrown from model inserts and updates
+Eloquent::unguard();
+// Renables any ability to throw mass assignment exceptions

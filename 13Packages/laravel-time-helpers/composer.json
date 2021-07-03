@@ -1,0 +1,48 @@
+{
+    "name": "mateusjunges/laravel-time-helpers",
+    "type": "library",
+    "license": "MIT",
+    "description": "A simple collection of time helpers.",
+    "authors": [
+        {
+            "name": "Mateus Junges",
+            "email": "mateus@junges.dev"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/mateusjunges/larave-time-helpers/issues",
+        "source": "https://github.com/mateusjunges/laravel-time-helpers"
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "require": {
+        "php": "^7.4",
+        "illuminate/support": "^7.0|^8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Junges\\TimeHelpers\\": "src/"
+        },
+        "files": [
+            "src/helpers.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Junges\\TimeHelpers\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Junges\\TimeHelpers\\Providers\\TimeHelperServiceProvider"
+            ]
+        }
+    },
+    "require-dev": {
+        "orchestra/testbench": "^5.0|^6.0"
+    },
+    "scripts": {
+        "test": "./vendor/bin/phpunit"
+    }
+}

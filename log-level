@@ -1,0 +1,5 @@
+el' => env('APP_LOG_LEVEL', 'error'),
+
+    {tip} Monolog recognizes the following severity levels - from least severe to most severe: 
+debug, info, notice, warning, error, critical, alert, emergency.
+

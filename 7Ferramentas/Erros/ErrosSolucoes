@@ -1,0 +1,19 @@
+Recebia o erro
+The GET method is not supported for this route. Supported methods: HEAD. 
+Quando estava rodando o app com
+http://localhost/app/public
+
+Solução
+
+Executar
+
+php artisan serve
+
+http://127.0.0.1:8000
+
+Erro
+View [welcome] not found. 
+
+Solução
+Era problema com permissão de arquivos
+

@@ -1,0 +1,22 @@
+# Configurações básicas do PHP e do Apache
+
+## Configurar php
+
+display_errors = On
+```bash
+sudo nano /etc/php/7.2/apache2/php.ini
+```
+## Configurar apache
+```bash
+sudo nano /etc/apache2/apache2.conf
+```
+Adicione
+```bash
+ServerName localhost
+```
+
+Troque as 3 ocirrências de None por All em <Directory />
+
+```bash
+sudo systemctl restart apache2
+```

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+<link href="./select2.css" rel="stylesheet" />
+<script src="./select2.js"></script>
+
+<p>Este exemplo para funcionar tive que teclar Ctrl+U na página
+https://select2.org/getting-started/basic-usage
+E baixar o css e o js,
+pois nem o CDN do site, nem o exemplo do GitHub funcionaram.</p>
+
+Estados<br>
+<select class="js-example-basic-multiple" name="states[]" multiple="multiple">
+  <option value="CE">Ceará</option>
+  <option value="RJ">Rio de Janeiro</option>
+  <option value="SP">São Paulo</option>
+</select>
+
+<script>
+$(document).ready(function() {
+    $('.js-example-basic-multiple').select2();
+});
+</script>
+</body>
+</html>

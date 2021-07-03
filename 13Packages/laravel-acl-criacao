@@ -1,0 +1,980 @@
+Pacote para implantar ACL em aplicativos do Laravel 8 from Scratch
+
+Usando Users, Roles, Permissions, Provider, Middleware, Trait, Gates, etc
+
+Para facilitar a criação de controllers,models, views, rotas, migrations, usarei o pacote grud-generator-acl
+
+Objetivos deste projeto
+
+Sei que existem vários e ótimos pacotes com a mesma finalidade deste para laravel, como o spatie permissions, o laravel-admin, o laravue, o laratrust e outros mais. Estes são pacotes criados por profissioonais com grande experiência com laravel e por conta disso algumas vezes vem com um código meio complexo. Mas eu estava querendo aprender a fazer eu mesmo, ter o máximo controle possível, usar apenas os recursos nativos do laravel e criar de forma simples, sempre que possível. E o resultado está aqui para você avaliar. Adianto que gostei muito da experiencia e do resultado e que aprendi bastante também com a criação deste projeto.
+
+O controle de acesso (ACL) de aplicativos é algo importante, especialmente em grandes aplicativos.
+
+Teremos as seguintes tabelas principais
+
+users
+roles
+permissions
+clients
+
+Teremos os seguintes usuários
+
+1-Super
+2-Admin
+3-Manager
+4-User
+
+As roles
+
+1-super
+2-admin
+3-manager
+4-user
+
+Algumas permissões
+
+1-all-all
+2-users-all
+3-roles-all
+4-permissions-all
+5-clients-all
+6-products-all
+7-clients-index
+
+Tabelas pivô
+
+As roles e permissions serão atribuidas aos usuários via código e não diretamente. Elas serão armazenadas nas tabelas pivô: - user_role - user_permission - role_permission
+
+Exemplo de controller criado pelo gerador de CRUDs
+
+<?php
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests;
+
+use App\Models\Client;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+class ClientController extends Controller
+{
+    public function __construct()
+    {
+        $this->middleware('auth');        
+    }
+
+    public function index(Request $request)
+    {
+        $auth = Auth::user()->hasRole('super', 'manager', 'user');
+        if((!$auth)){
+            return view('home');
+        }else{
+            $keyword = $request->get('search');
+            $perPage = 5;
+
+            if (!empty($keyword)) {
+                $clients = Client::where('name', 'LIKE', "%$keyword%")
+                ->orWhere('email', 'LIKE', "%$keyword%")
+                ->latest()->orderBy('id')->paginate($perPage);
+            } else {
+                $clients = Client::latest()->orderBy('id')->paginate($perPage);
+            }
+
+            return view('admin.clients.index', compact('clients'));
+        }
+    }
+
+    public function create()
+    {
+        $auth = Auth::user()->hasRole('super', 'manager');
+        if((!$auth)){
+            return view('home');
+        }else{
+            return view('admin.clients.create');
+        }
+    }
+
+    public function store(Request $request)
+    {
+        $auth = Auth::user()->hasRole('super', 'manager');
+        if((!$auth)){
+            return view('home');
+        }else{
+
+            $requestData = $request->all();
+
+            Client::create($requestData);
+
+            return redirect('admin/clients')->with('flash_message', 'Client added!');
+        }
+    }
+
+    public function show($id)
+    {
+        $auth = Auth::user()->hasRole('super', 'manager');
+        if((!$auth)){
+            return view('home');
+        }else{
+            $client = Client::findOrFail($id);
+
+            return view('admin.clients.show', compact('client'));
+        }
+    }
+
+    public function edit($id)
+    {
+        $auth = Auth::user()->hasRole('super', 'manager');
+        if((!$auth)){
+            return view('home');
+        }else{
+            $client = Client::findOrFail($id);
+
+            return view('admin.clients.edit', compact('client'));
+        }
+    }
+
+    public function update(Request $request, $id)
+    {
+        $auth = Auth::user()->hasRole('super', 'manager');
+        if((!$auth)){
+            return view('home');
+        }else{
+
+            $requestData = $request->all();
+
+            $client = Client::findOrFail($id);
+            $client->update($requestData);
+
+            return redirect('admin/clients')->with('flash_message', 'Client updated!');
+        }
+    }
+
+    public function destroy($id)
+    {
+        $auth = Auth::user()->hasRole('super', 'manager');
+        if((!$auth)){
+            return view('home');
+        }else{
+            Client::destroy($id);
+
+            return redirect('admin/clients')->with('flash_message', 'Client deleted!');
+        }
+    }
+}
+
+Usando o método can()
+
+Então podemos controlar em nossos actions dos controller o acesso através das permissões dos usuários
+
+Testar se o usuário logado pode usar a permissão all-all
+
+public function index(Request $request){
+    if ($request->user()->can('all-all')) {
+        return 'Seja muito bem vindo seu Super';
+    }
+}
+
+Views
+
+Vejamos duas views como exemplo das views do pacote.
+
+Nosso pacote conta com um layout customizado e também com as views home.blade.php e welcome.blade.php customizadas.
+
+
+View index típica
+Controle de acesso geral
+
+O controle de acesso geral é para as 3 roles: super, manager e user
+Controle de acesso específico
+
+Mas o controle para todos os botões (new, view, edit e delete) e do form Search é permitido apenas para os users: super e manager. O user com role user não tem acesso a estes itens.
+Customização
+
+Logo que o ribafs/laravel-acl é instalado, publicado e inteiramente configurado, todas as permissões nas views estão assim
+
+            @role('super', 'admin')
+
+Assim somente um super ou admin tem acesso a tudo.
+
+Então precisará ajustar de acordo com suas necessidades e usuários existentes.
+Necessidades e criatividade
+
+Estas motivarão você para as customizações.
+Permissões default
+
+Por padrão eu pensei assim nas permissões de cada role:
+
+- super: pode tudo, sem exceção no aplicativo
+- admin: pode tudo mas somente nas tabelas administrativas: users, roles e permissions
+- manager: pode tudo nas tabelas tipo de negócio: clients
+- user: pode somente logar e acessar o index de clients e com restrições
+
+@extends('layouts.app')
+
+@section('content')
+    <div class="container">
+        <div class="row">
+            @include('includes.sidebar')
+
+            @role('super', 'manager', 'user')
+            <div class="col-md-9">
+                <div class="card">
+                    @role('super', 'manager')
+                    <div class="card-header">Clients</div>
+                    <div class="card-body">
+                        <a href="{{ url('/admin/clients/create') }}" class="btn btn-success btn-sm" title="Add New Client">
+                            <i class="fa fa-plus" aria-hidden="true"></i> Add New
+                        </a>
+
+                        <form method="GET" action="{{ url('/admin/clients') }}" accept-charset="UTF-8" class="form-inline my-2 my-lg-0 float-right" role="search">
+                            <div class="input-group">
+                                <input type="text" class="form-control" name="search" placeholder="Search..." value="{{ request('search') }}">
+                                <span class="input-group-append">
+                                    <button class="btn btn-secondary" type="submit">
+                                        <i class="fa fa-search"></i>
+                                    </button>
+                                </span>
+                            </div>
+                        </form>
+                    @endrole
+                        <br/>
+                        <br/>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th><th>Name</th><th>Email</th>@role('super', 'manager')<th>Actions</th>@endrole
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                @foreach($clients as $item)
+                                    <tr>
+                                        <td>{{ $item->id }}</td>
+                                        <td>{{ $item->name }}</td><td>{{ $item->email }}</td>
+                                        <td>
+                                @role('super', 'manager')
+                                            <a href="{{ url('/admin/clients/' . $item->id) }}" title="View Client"><button class="btn btn-info btn-sm"><i class="fa fa-eye" aria-hidden="true"></i> View</button></a>
+                                            <a href="{{ url('/admin/clients/' . $item->id . '/edit') }}" title="Edit Client"><button class="btn btn-primary btn-sm"><i class="fa fa-pencil-square-o" aria-hidden="true"></i> Edit</button></a>
+
+                                            <form method="POST" action="{{ url('/admin/clients' . '/' . $item->id) }}" accept-charset="UTF-8" style="display:inline">
+                                                {{ method_field('DELETE') }}
+                                                {{ csrf_field() }}
+                                                <button type="submit" class="btn btn-danger btn-sm" title="Delete Client" onclick="return confirm(&quot;Confirm delete?&quot;)"><i class="fa fa-trash-o" aria-hidden="true"></i> Delete</button>
+                                            </form>
+                                @endrole
+                                        </td>
+                                    </tr>
+                                @endforeach
+                                </tbody>
+                            </table>
+                            <div class="pagination-wrapper"> {!! $clients->appends(['search' => Request::get('search')])->render() !!} </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            @endrole
+        </div>
+    </div>
+@endsection
+
+Uma típica edit.blade.php
+
+Veja que o acesso desta view é somente para os users das roles super e manager. super pode tudo e manager pode tudo na clients.
+
+Se fosse uma edit.blade.php da users, roles ou permissions eu mudaria o controle para:
+
+            @role('super', 'admin')
+
+@extends('layouts.app')
+
+@section('content')
+    <div class="container">
+        <div class="row">
+            @include('includes.sidebar')
+
+            @role('super', 'manager')
+            <div class="col-md-9">
+                <div class="card">
+                    <div class="card-header">Edit Client #{{ $client->id }}</div>
+                    <div class="card-body">
+                        <a href="{{ url('/admin/clients') }}" title="Back"><button class="btn btn-warning btn-sm"><i class="fa fa-arrow-left" aria-hidden="true"></i> Back</button></a>
+                        <br />
+                        <br />
+
+                        @if ($errors->any())
+                            <ul class="alert alert-danger">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        @endif
+
+                        <form method="POST" action="{{ url('/admin/clients/' . $client->id) }}" accept-charset="UTF-8" class="form-horizontal" enctype="multipart/form-data">
+                            {{ method_field('PATCH') }}
+                            {{ csrf_field() }}
+
+                            @include ('admin.clients.form', ['formMode' => 'edit'])
+
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+            @endrole
+        </div>
+    </div>
+@endsection
+
+
+Rotas
+
+As rotas deste projeto são específicas com algumas nuances próprias.
+
+Confira.
+
+<?php
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
+
+Route::get('/', function () {
+    return view('welcome');
+});
+
+Route::get('/home', function () {
+    return view('home');
+})->name('home');
+
+Route::middleware(['auth'])->get('/dashboard', function () {
+    $super = Auth::user()->hasRole('super');
+    $admin = Auth::user()->hasRole('admin');
+    $manager = Auth::user()->hasRole('manager');
+    $user = Auth::user()->hasRole('user');
+
+    if($super || $admin) {
+        return redirect('/admin/users');
+    }elseif($manager || $user) {
+        return redirect('/admin/clients');
+    }else{
+        return view('/dashboard');
+    }
+})->name('dashboard');
+
+Route::group(['prefix' => 'admin', 'middleware' => 'auth:sanctum'], function(){
+    Route::resource('users', 'App\Http\Controllers\Admin\UserController');
+    Route::resource('roles', 'App\Http\Controllers\Admin\RoleController');
+    Route::resource('permissions', 'App\Http\Controllers\Admin\PermissionController');
+    Route::resource('clients', 'App\Http\Controllers\Admin\ClientController');
+});
+
+Seeders
+
+Este pacote vem com dois seeders: clients e permissions
+Clients
+
+<?php
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use DB; 
+
+class ClientsSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     *
+     * @return void
+     */
+    public function run()
+    {
+        $faker = \Faker\Factory::create();
+
+        for($i=0; $i<=100; $i++):
+            DB::table('clients')
+                ->insert([
+                'name'      => $faker->name,
+                'email'      => $faker->email,
+                ]);
+        endfor;
+    }
+}
+
+Permissions
+
+O PermissionsSeeder é o coração do pacote laravel-acl. Ele faz o cadastro inicial das tabelas principais e pivô. O cadastro das tabelas pivô é feito indiretamente usando o método attach().
+
+<?php
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use App\Models\Permission;
+use App\Models\Role;
+use App\Models\User;
+
+class PermissionsSeeder extends Seeder
+{
+    public function run()
+    {
+        // Consultar e guardar em $super_permission a permissão all-all e demais
+        $super_permission = Permission::where('slug','all-all')->first();
+        $admin_permission1 = Permission::where('slug','users-all')->first();
+        $admin_permission2 = Permission::where('slug','roles-all')->first();
+        $admin_permission3 = Permission::where('slug','permissions-all')->first();
+        $manager_permission1 = Permission::where('slug', 'clients-all')->first();
+        $manager_permission2 = Permission::where('slug', 'products-all')->first();
+        $user_permission = Permission::where('slug', 'clients-index')->first();
+
+        // Cadastrar a role super e anexar a ela suas permissões
+        $super_role = new Role();
+        $super_role->slug = 'super';
+        $super_role->name = 'Super role';
+        $super_role->save();
+        $super_role->permissions()->attach($super_permission); // para que esta permission seja anexada sem problema, precisa existir em 'permissions'
+
+        // Cadastrar a role admin e anexar a ela suas permissões
+        $admin_role = new Role();
+        $admin_role->slug = 'admin';
+        $admin_role->name = 'Admin role';
+        $admin_role->save();
+        $admin_role->permissions()->attach($admin_permission1);
+        $admin_role->permissions()->attach($admin_permission2);
+        $admin_role->permissions()->attach($admin_permission3);
+
+        // Cadastrar a role manager e anexar a ela suas permissões
+        $manager_role = new Role();
+        $manager_role->slug = 'manager';
+        $manager_role->name = 'Manager role';
+        $manager_role->save();
+        $manager_role->permissions()->attach($manager_permission1);
+        $manager_role->permissions()->attach($manager_permission2);
+
+        // Cadastrar a role user e anexar a ela suas permissões
+        $user_role = new Role();
+        $user_role->slug = 'user';
+        $user_role->name = 'Uer role';
+        $user_role->save();
+        $user_role->permissions()->attach($user_permission);
+
+        // Consultar e guardar em $super_role a role super e demais
+        $super_role = Role::where('slug','super')->first();
+        $admin_role = Role::where('slug','admin')->first();
+        $manager_role = Role::where('slug', 'manager')->first();
+        $user_role = Role::where('slug','user')->first();
+
+        // Cadastrar no banco a permission all-all e anexar sua(a) respectiva(s) role(s)
+        $all_all = new Permission();
+        $all_all->slug = 'all-all';
+        $all_all->name = 'All permissions';
+        $all_all->save();
+        $all_all->roles()->attach($super_role); // para que esta role seja anexada sem problema, precisa existir em 'roles'
+
+        // Cadastrar no banco a permission user-all e anexar sua(a) respectiva(s) role(s)
+        $users_all = new Permission();
+        $users_all->slug = 'users-all';
+        $users_all->name = 'Users all';
+        $users_all->save();
+        $users_all->roles()->attach($admin_role);
+
+        // Cadastrar no banco a permission roles-all e anexar sua(a) respectiva(s) role(s)
+        $roles_all = new Permission();
+        $roles_all->slug = 'roles-all';
+        $roles_all->name = 'Roless all';
+        $roles_all->save();
+        $roles_all->roles()->attach($admin_role);
+
+        // Cadastrar no banco a permission permissions-all e anexar sua(a) respectiva(s) role(s)
+        $permissions_all = new Permission();
+        $permissions_all->slug = 'permissions-all';
+        $permissions_all->name = 'Permissions all';
+        $permissions_all->save();
+        $permissions_all->roles()->attach($admin_role);
+
+        // Cadastrar no banco a permission clients-all e anexar sua(a) respectiva(s) role(s)
+        $clients_all = new Permission();
+        $clients_all->slug = 'clients-all';
+        $clients_all->name = 'Clients all';
+        $clients_all->save();
+        $clients_all->roles()->attach($manager_role);
+
+        // Cadastrar no banco a permission products-all e anexar sua(a) respectiva(s) role(s)
+        $products_all = new Permission();
+        $products_all->slug = 'products-all';
+        $products_all->name = 'Products all';
+        $products_all->save();
+        $products_all->roles()->attach($manager_role);
+
+        // Cadastrar no banco a permission clients-all e anexar sua(a) respectiva(s) role(s)
+        $clients_index = new Permission();
+        $clients_index->slug = 'clients-index';
+        $clients_index->name = 'Clients index';
+        $clients_index->save();
+        $clients_index->roles()->attach($user_role);
+
+        // Consultar e guardar em $super_role a role super
+        $super_role = Role::where('slug','super')->first();
+        $admin_role = Role::where('slug','admin')->first();
+        $manager_role = Role::where('slug', 'manager')->first();
+        $user_role = Role::where('slug', 'user')->first();
+
+        // Consultar e guardar em $super_perm a permissão all-all e demais
+        $super_perm = Permission::where('slug','all-all')->first();
+        $admin_perm1 = Permission::where('slug','users-all')->first();
+        $admin_perm2 = Permission::where('slug','roles-all')->first();
+        $admin_perm3 = Permission::where('slug','permissions-all')->first();
+        $manager_perm1 = Permission::where('slug','clients-all')->first();
+        $manager_perm2 = Permission::where('slug','products-all')->first();
+        $user_perm = Permission::where('slug','clients-index')->first();
+
+        // Cadastrar o user Super no banco e anexar a ele sua(s) respectiva(s) role(s) e permission(s)
+        $super = new User();
+        $super->name = 'Ribamar FS';
+        $super->email = 'ribafs@gmail.com';
+        $super->password = bcrypt('zm981029R@');
+        $super->save();
+        $super->roles()->attach($super_role); // Esta role precisa existir em 'roles' para que seja adequadamente anexada
+        $super->permissions()->attach($super_perm); // Esta role precisa existir em 'permissions' para que seja adequadamente anexada
+
+        // Cadastrar o user Admin no banco e anexar a ele sua(s) respectiva(s) role(s) e permission(s)
+        $admin = new User();
+        $admin->name = 'Admin user';
+        $admin->email = 'admin@mail.org';
+        $admin->password = bcrypt('123456');
+        $admin->save();
+        $admin->roles()->attach($admin_role);
+        $admin->permissions()->attach($admin_perm1);
+        $admin->permissions()->attach($admin_perm2);
+        $admin->permissions()->attach($admin_perm3);
+
+        // Cadastrar o user Manager no banco e anexar a ele sua(s) respectiva(s) role(s) e permission(s)
+        $manager = new User();
+        $manager->name = 'Manager user';
+        $manager->email = 'manager@mail.org';
+        $manager->password = bcrypt('123456');
+        $manager->save();
+        $manager->roles()->attach($manager_role);
+        $manager->permissions()->attach($manager_perm1);
+        $manager->permissions()->attach($manager_perm2);
+ 
+        // Cadastrar o user User no banco e anexar a ele sua(s) respectiva(s) role(s) e permission(s)
+        $user = new User();
+        $user->name = 'User user';
+        $user->email = 'user@mail.org';
+        $user->password = bcrypt('123456');
+        $user->save();
+        $user->roles()->attach($user_role);
+        $user->permissions()->attach($user_perm);
+       
+        //return redirect()->back();
+    }
+}
+
+
+Middleware RoleMiddleware
+
+Este é o middleware usado.
+
+<?php
+namespace App\Http\Middleware;
+
+use Closure;
+use Illuminate\Http\Request;
+
+class RoleMiddleware
+{
+    /**
+     * Handle an incoming request.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Closure  $next
+     * @return mixed
+     */
+    public function handle(Request $request, Closure $next, $role, $permission = null)
+
+    {
+        if(!$request->user()->hasRole($role)) {
+             abort(404);
+
+        }
+
+        if($permission !== null && !$request->user()->can($permission)) {
+              abort(404);
+        }
+
+        return $next($request);
+    }
+}
+
+Método can($permission)
+
+Aqui nasce nosso método can($permission), que pode ser usado nos actions dos controller, para controlar o acesso pelo slug da permission
+Usando
+
+Testar de o usuário logado pode usar a permissão all-all
+
+    public function index(Request $request){
+        if ($request->user()->can('all-all')) {
+            return 'Seja muito bem vindo seu Super';
+        }
+    }
+
+
+Provider
+
+A definição das tags customizadas do blade surgiu no provider abaixo
+Usando nas blades
+
+@role
+@endrole
+
+Que deverão ser usadas nas blades
+Para uso nos controllers e routes temos:
+
+- super:role
+- admin:role
+- etc
+
+Nosso provider
+
+<?php
+namespace App\Providers;
+
+use App\Models\Permission;
+use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\ServiceProvider;
+
+class PermissionsServiceProvider extends ServiceProvider
+{   
+    public function register()
+    {
+        //
+    }
+
+    public function boot()
+    {
+        try {
+            Permission::get()->map(function ($permission) {
+                Gate::define($permission->slug, function ($user) use ($permission) {
+                    return $user->hasPermissionTo($permission);
+                });
+            });
+        } catch (\Exception $e) {
+            report($e);
+            return false;
+        }
+
+        //Blade directives
+        Blade::directive('role', function ($role) {
+            return "<?php if(auth()->check() && auth()->user()->hasRole({$role})) : ?>";
+        });
+
+        Blade::directive('endrole', function ($role) {
+            return "<?php endif; ?>";
+        });
+    }
+}
+
+Para proteger as rotas
+
+Testar o middleware com
+
+- role:super
+- role:admin
+- etc
+
+Route::group(['middleware' => 'role:super'], function() {
+   Route::get('/super', 'App\Http\Controllers\TesteController@super');
+});
+
+Outro exemplo
+
+Route::middleware(['auth:sanctum', 'verified'])->get('/dashboard', function () {
+    $super = (Auth::user()->hasRole('super'));
+    $admin = (Auth::user()->hasRole('admin'));
+    $manager = (Auth::user()->hasRole('manager'));
+    $user = (Auth::user()->hasRole('user'));
+
+    if($super) {
+        return redirect('super/users');
+    }elseif($admin) {
+        return redirect('admin/users');
+    }elseif($manager) {
+        return redirect('manager/clients');
+    }elseif($user) {
+        return redirect('user/clients');
+    }
+
+    return view('dashboard');
+})->name('dashboard');
+
+Route::get('/home', function () {
+    return view('home');
+})->name('home');
+
+Route::group(['middleware' => ['auth:sanctum', 'verified']], function () {
+    Route::group(['middleware' => ['role:super'], 'prefix' => 'super'], function () { 
+            Route::resource('users', 'App\Http\Controllers\UserController'); // super/users
+            Route::resource('roles', 'App\Http\Controllers\RoleController'); // super/roles
+            Route::resource('permissions', 'App\Http\Controllers\PermissionController'); // super/permissions
+            Route::resource('clients', 'App\Http\Controllers\ClientController'); // super/clients
+            Route::resource('products', 'App\Http\Controllers\ProductController'); // super/products
+    });
+    Route::group(['middleware' => ['role:admin'], 'prefix' => 'admin'], function () {
+            Route::resource('users', 'App\Http\Controllers\UserController');
+            Route::resource('roles', 'App\Http\Controllers\RoleController');
+            Route::resource('permissions', 'App\Http\Controllers\PermissionController');
+    });
+    Route::group(['middleware' => ['role:manager'], 'prefix' => 'manager'], function () {
+            Route::resource('clients', 'App\Http\Controllers\ClientController');
+            Route::resource('products', 'App\Http\Controllers\ProductController');
+    });
+    Route::group(['middleware' => ['role:user'], 'prefix' => 'user'], function () {
+            Route::resource('clients', 'App\Http\Controllers\ClientController');
+    });
+});
+
+
+Trait
+
+O HasPermissionsTrait é peça fundamental do nosso pacote, com as principais funções para o controle de acesso.
+
+<?php
+namespace App\Traits;
+
+use App\Models\Permission;
+use App\Models\Role;
+
+trait HasPermissionsTrait {
+
+   public function roles() {
+      return $this->belongsToMany(Role::class,'user_role');
+
+   }
+
+   public function permissions() {
+      return $this->belongsToMany(Permission::class,'user_permission');
+
+   }
+
+    // ROLES
+
+    // Parâmetro: roles. Ex: $user->hasRole('admin', 'super')
+    // Checar se o user atual detem uma das roles especificadas
+    // Retorno: true/false
+   public function hasRole( ... $roles ) {
+       foreach ($roles as $role) {
+       if ($this->roles->contains('slug', $role)) {
+             return true;
+          }
+       }
+       return false;
+    }
+
+    protected function getAllRoles(array $roles) {
+        return Role::whereIn('slug',$roles)->get();    
+    }
+
+    // Criar uma role a ser gravada em 'roles'
+    // Parâmetros: $name e $slug da role a ser criada
+    // Sem retorno, grava e mostra na tela a role criada
+    public function createRole($name, $slug){
+        $role = Role::create([
+            'name' => $name,
+            'slug' => $slug
+        ]);
+        return $role;
+    }
+
+    // Parâmetro: roles. Ex: $user->giveRolesTo('editor','author')// as roles já devem estar em 'roles' e serão atribuidas ao user locado
+    // Atribuir roles para o user atual, gravadas na tabela user_role
+    // Sem retorno. Grava as roles na tabela user_role para o user atual
+    public function giveRolesTo(... $roles) {
+       $roles = $this->getAllRoles($roles);
+       if($roles === null) {
+          return $this;
+       }
+       $this->roles()->saveMany($roles);
+       return $this;
+    }
+
+    // Remove uma ou mais roles do user atual, que estão em user_role
+    // Parãmetros: roles. Ex: $user->deleteRoles('admin', 'user')
+    // Sem retorno. Grava as informações na tabela e mostra na tela dados do suer atual
+    public function deleteRoles( ... $roles ) {
+       $roles = $this->getAllRoles($roles);
+       $this->roles()->detach($roles);
+       return $this;
+    }
+
+    // PERMISSIONS
+
+    protected function hasPermission($permission) {
+       return (bool) $this->permissions->where('slug', $permission)->count();
+    }
+
+    // Parâmetro: permission. $user->hasPermissionThroughRole('clients-index'). As permissões devem estar em 'permisions'
+    // Checar se o user atual detem a permission citada
+    // Retorno true/false
+    public function hasPermissionThroughRole($permission) {
+        foreach ($permission->roles as $role){
+          if($this->roles->contains($role)) {
+            return true;
+          }
+        }
+        return false;
+    }
+
+    // Parâmetro: permission. $user->hasPermissionTo('clients-index'). As permissões devem estar em 'permisions'
+    // Checar se o user atual detem a permission citada
+    // Retorno true/false
+    public function hasPermissionTo($permission) {
+       return (bool) $this->hasPermissionThroughRole($permission) || $this->hasPermission($permission);
+    }
+
+    // Criar uma permission a ser gravada em 'permissions'
+    // Parâmetros: $name e $slug da permission a ser criada
+    // Sem retorno, grava e mostra na tela a permission criada
+    public function createPermission($name, $slug){
+        $permission = Permission::create([
+            'name' => $name,
+            'slug' => $slug
+        ]);
+        return $permission;
+    }
+
+    protected function getAllPermissions(array $permissions) {
+        return Permission::whereIn('slug',$permissions)->get();    
+    }
+
+    // Parâmetro: $permissions. Ex: $user->givePermissionsTo('clients-index','clients-edit')// as permissões já devem estar em 'permissions'
+    // Grava permissões para o user atual, na tabela user_permission
+    // Sem retorno. Grava as permissões na tabela user_permission para o user atual
+    public function givePermissionsTo(... $permissions) {
+       $permissions = $this->getAllPermissions($permissions);
+       if($permissions === null) {
+          return $this;
+       }
+       $this->permissions()->saveMany($permissions);
+       return $this;
+    }
+
+    // Remove uma ou mais permissões do user atual, que estão em user_permission
+    // Parãmetros: permissions. Ex: $user->deletePermissions('clients-index', 'clients-edit')
+    // Sem retorno. Grava as informações na tabela e mostra na tela dados do suer atual
+    public function deletePermissions( ... $permissions ) {
+       $permissions = $this->getAllPermissions($permissions);
+       $this->permissions()->detach($permissions);
+       return $this;
+    }
+}
+
+
+
+Usando o Tinker
+
+Usando o Tinker para gerenciar a ACL
+
+A maioria das funções do trait podem ser usadas via tinker para o gerenciamento do controle de acesso.
+Exemplos
+Retornar todas as roles existentes em 'roles'
+
+php artisan tinker
+$user = User::find(1) // Trazer o user com id 1, no nosso caso o Super user
+$user->allRoles()
+
+Retornará todas as roles
+Checar se user logado tem uma das roles: admin ou super
+
+Verificará na tabela user_role
+
+php artisan tinker
+$user = User::find(1) // Trazer o user com id 1, no nosso caso o Super user
+$user->hasRole('admin', 'super')
+
+No caso deve retornar true
+Criar uma nova role
+
+Que ficará'na tabela 'roles'
+
+$user->createRole('Role teste', 'teste')
+
+Mostrará a role criada na tela e a gravará na tabela 'roles'
+Atribuir uma ou mais role para o user atual
+
+Será gravado na tabela user_role. Lembre que somente serão atribuidas se as roles esxistirem em 'roles'
+
+php artisan tinker
+$user = User::find(3) // Trazer o user com id 3, no nosso caso o Manager user
+$user->giveRolesTo('editor','author')
+
+Não atribuiu nenhuma, pois as roles citadas não existem em 'roles'.
+Novo teste
+
+php artisan tinker
+$user = User::find(3) // Trazer o user com id 3, no nosso caso o Manager user
+$user->giveRolesTo('user')
+
+Agora sim, atribuiu, pois a role 'user' existe. Veja em user_role.
+Desatribuir uma role de um usuário
+
+php artisan tinker
+$user = User::find(3) // Trazer o user com id 3, no nosso caso o Manager user
+$user->deleteRoles('user')
+
+Veja em 'user_role'
+Temos no trait funções semelhantes para permissions
+
+
+Gerenciando o aplicativo
+
+Até o momento temos 3 formas de gerenciar os aplicativos criados usando o ribafs/laravel-acl: - Usando CRUDs. Muito simples, mas por enquanto gerencia somente as tabelas principais: users, roles, permissions e clients. - Usando o tinker - Usando comandos com artisan As duas últimas tanto gerenciam as tabelas principais quanto as pivô.
+
+Lembrando que deve evitar anexar roles e permissions manualmente para usuários.
+
+Para isso foram criados alguns commands, que gerencial de forma adequada.
+Adicionar user com role e permission anexada a ele
+
+add:user {name} {email} {password} {slug-role} {slug-perm}
+
+Exemplo:
+php artisan add:user 'User user2' user2@gmail.com 123456 manager clients-index
+
+Atualizar usuário existente anexando uma role e uma permission a ele
+
+gravado em user_role e user_permission
+
+user:upd {email} {slug-role} {slug-perm}
+
+Exemplo:
+php artisan user:upd manager@gmail.com manager clients-index
+
+Adicionar uma role para a tabela roles
+
+add:role {name-role} {slug-role}
+
+Exemplo:
+php artisan add:role 'Admin test' admin-test 
+
+Adicionar uma permission para a tabela permissions
+
+add:perm {name-perm} {slug-perm}
+
+Exemplo:
+php artisan add:perm 'Clients test' clients-testt 
+
+Remover permission de user de 'user-permission'
+
+del:perm {email-user} {slug-perm}
+
+Exemplo:
+php artisan del:perm super@gmail.com clients-index
+
+Remover role de user de 'user_role'
+
+del:role {email-user} {slug-role}
+
+Exemplo:
+php artisan del:role super@gmail.com user
+
+

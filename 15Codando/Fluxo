@@ -1,0 +1,31 @@
+Fluxo das informações no Laravel de forma simplificada
+
+- O cliente através de um navegador requisita uma URI. Exemplo: https://meusite.com/clients
+- O sistema de rotas identifica o controller e o action na URI solicitada. No caso, o controller é clients e o action é index(), pois é o default
+- cada tabela tem um model correspondente. No caso a tabela clients e o model Client
+- cada model tem um controller correspondente e cada controller tem um ou mais actions. Lembrando que o controller inclui o model para interagir com ele. 
+- cada action de um controller corresponde a uma view. No exemplo o controller processará o action index() e enviará o resultado para a view clients/index.blade.php
+- a view respectiva devolve ao usuário que solicitou o resultado
+
+Exemplo:
+rota - /
+tabela - clients
+model - Client
+controller - ClientController, que geralmente tem os actions: index(), edit(), show(), etc. Neste caso será ativado o action index().
+views - pasta clients, contendo: index.blade.php, edit.blade.php, show.blade.php, etc. No caso será mostrada a view index.blade.php
+
+Models
+
+Podemos pensar em models como representações de tabelas na aplicação.
+
+Rotas
+
+Recebem requests dos usuários para uma URI, que a rota traduz em controller e action, então passam para o respectivo controller/action
+
+Controllers
+
+O controller recebe a requisição/request, passa para a respectiva ação/action. Geralmente existe alguma consulta ao banco. O controller, antes de enviar para o model, que é quem cuida das operações com o banco, antes o controller executa algumas operações, como validações, ordenação, paginação, busca, etc, e envia para o respectivo model. O model processa e devolve apra o controller que lhe enviou. O controller recebe e envia para a view que o cliente solicitou e identificada pela rota.
+
+
+
+

@@ -1,0 +1,713 @@
+Relacionamentos entre tabelas no Laravel 8
+
+Um para um
+
+- um user pode ter somente uma única conta
+- uma conta pode ter somente um dono/user
+- marido somente pode ter uma esposa
+- esposa somente pode pertencer a um marido
+- orders e invoices
+
+Exemplo
+
+O relacionamento é pela PK de ambas as tabelas
+
+CREATE TABLE users(
+    id INT NOT NULL AUTO_INCREMENT,
+    email VARCHAR(100) NOT NULL,
+    password VARCHAR(100) NOT NULL,
+    PRIMARY KEY(id)
+);
+
+CREATE TABLE accounts(
+    id INT NOT NULL AUTO_INCREMENT,
+    role VARCHAR(50) NOT NULL,
+    PRIMARY KEY(id),
+    FOREIGN KEY(id) REFERENCES users(id)
+);
+
+Um para muitos
+
+- users e orders
+- categories e subcategories
+- Items and Categories (many to one)
+
+CREATE TABLE users( 
+    id INT NOT NULL AUTO_INCREMENT, 
+    email VARCHAR(100) NOT NULL, 
+    password VARCHAR(100) NOT NULL, 
+    PRIMARY KEY(id) 
+);
+
+CREATE TABLE orders( 
+    id INT NOT NULL AUTO_INCREMENT, 
+    user_id INT NOT NULL, 
+    description VARCHAR(50) NOT NULL, 
+    PRIMARY KEY(id), 
+    FOREIGN KEY(user_id) REFERENCES users(id) 
+);
+
+O relacionamento é formado pela PK da tabela principal com a FK da secundária
+
+Muitos para muitos
+
+- authors and books
+- orders e itens
+
+Um relacionamento muitos para muitos resolve-se adicionando uma terceira tabela entre as duas com relacionamento: M ->1 -- 1 <- M
+
+authors     authors_books   books
+
+authors     authors_books       books
+id  name    ahthor_id book_id   id  name      
+1   John    1         11        11  Justice is Done  
+2   Peter   2         12        12  E o vento levou
+            2         13        13  So be it
+
+GEralmente a tabela pivot (authors_books) contém somente dois campos, que são os ids de cada uma das duas tabelas
+
+Exemplo real
+
+composer global require laravel/installer -W
+laravel new model-relationships-study
+
+php artisan make:migration create_users_table
+
+You can also use the --create or --table switches to add a little bit more boilerplate to help get you started:
+
+php artisan make:migration create_users_table --create=users
+
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+class CreateUsersTable extends Migration
+{
+    public function up()
+    {
+        Schema::create('users', function (Blueprint $table) {
+            $table->id();
+            $table->timestamps();
+        });
+    }
+
+    public function down()
+    {
+        Schema::dropIfExists('users');
+    }
+}
+
+php artisan make:model Category -m
+
+php artisan make:model SubCategory -m
+
+class CreateSubCategoriesTable extends Migration
+{
+    public function up()
+    {
+        Schema::create('sub_categories', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+
+            $table->unsignedBigInteger('category_id');
+            $table->foreign('category_id')
+                ->references('id')
+                ->on('categories')
+                ->onDelete('cascade');
+        });
+    }
+}
+
+php artisan make:model Item -m
+
+class CreateItemsTable extends Migration
+{
+    public function up()
+    {
+        Schema::create('items', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->text('description');
+            $table->string('type');
+            $table->unsignedInteger('price');
+            $table->unsignedInteger('quantity_in_stock');
+
+            $table->unsignedBigInteger('sub_category_id');
+            $table->foreign('sub_category_id')
+                ->references('id')
+                ->on('sub_categories')
+                ->onDelete('cascade');
+        });
+    }
+}
+
+php artisan make:model Order -m
+
+class CreateOrdersTable extends Migration
+{
+    public function up()
+    {
+        Schema::create('orders', function (Blueprint $table) {
+            $table->id();
+            $table->string('status');
+            $table->unsignedInteger('total_value');
+            $table->unsignedInteger('taxes');
+            $table->unsignedInteger('shipping_charges');
+
+            $table->unsignedBigInteger('user_id');
+            $table->foreign('user_id')
+                ->references('id')
+                ->on('users')
+                ->onDelete('cascade');
+        });
+    }
+}
+
+php artisan make:migration create_item_order_table --create="item_order"
+
+class CreateItemOrderTable extends Migration
+{
+    public function up()
+    {
+        Schema::create('item_order', function (Blueprint $table) {
+            $table->unsignedBigInteger('order_id');
+            $table->foreign('order_id')
+                ->references('id')
+                ->on('orders')
+                ->onDelete('cascade');
+            
+            $table->unsignedBigInteger('item_id');
+            $table->foreign('item_id')
+                ->references('id')
+                ->on('items')
+                ->onDelete('cascade');    
+        });
+    }
+}
+
+php artisan make:model Invoice -m
+
+class CreateInvoicesTable extends Migration
+{
+    public function up()
+    {
+        Schema::create('invoices', function (Blueprint $table) {
+            $table->id();
+            $table->timestamp('raised_at')->nullable();
+            $table->string('status');
+            $table->unsignedInteger('totalAmount');
+
+            $table->unsignedBigInteger('order_id')->unique();
+            $table->foreign('order_id')
+                ->references('id')
+                ->on('orders')
+                ->onDelete('cascade')
+                ->unique();
+        });
+    }
+}
+
+php artisan make:model Transaction -m
+
+class CreateTransactionsTable extends Migration
+{
+    public function up()
+    {
+        Schema::create('transactions', function (Blueprint $table) {
+            $table->id();
+            $table->timestamp('executed_at');
+            $table->string('status');
+            $table->string('payment_mode');
+            $table->string('transaction_reference')->nullable();
+
+            $table->unsignedBigInteger('order_id');
+            $table->foreign('order_id')
+                ->references('id')
+                ->on('orders')
+                ->onDelete('cascade');
+        });
+    }
+}
+
+php artisan migrate:fresh
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Order extends Model
+{
+    use HasFactory;
+
+    public function user() {
+        return $this->belongsTo(User::class);
+    }
+}
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class User extends Model
+{
+    use HasFactory;
+    public $timestamps = false;
+
+    public function orders() {
+        return $this->hasMany(Order::class);
+    }
+}
+
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Order extends Model
+{
+    use HasFactory;
+    public $timestamps = false;
+
+    public function user() {
+        return $this->belongsTo(User::class);
+    }
+
+    public function invoice() {
+        return $this->hasOne(Invoice::class);
+    }
+}
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Invoice extends Model
+{
+    use HasFactory;
+    public $timestamps = false;
+
+    public function order() {
+        return $this->belongsTo(Order::class);
+    }
+}
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Item extends Model
+{
+    use HasFactory;
+    public $timestamps = false;
+
+    public function orders() {
+        return $this->belongsToMany(Order::class);
+    }
+}
+
+
+class Order extends Model
+{
+    /* ... other code */
+    
+    public function items() {
+        return $this->belongsToMany(Item::class);
+    }
+}
+
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use App\Models\Category;
+use App\Models\SubCategory;
+use App\Models\Item;
+use App\Models\Order;
+use App\Models\Invoice;
+use App\Models\User;
+use Faker;
+
+class DatabaseSeeder extends Seeder
+{
+    public function run()
+    {
+        $faker = Faker\Factory::create();
+
+        // Let's make two users
+        $user1 = User::create(['name' => $faker->name]);
+        $user2 = User::create(['name' => $faker->name]);
+
+        // Create two categories, each having two subcategories
+        $category1 = Category::create(['name' => $faker->word]);
+        $category2 = Category::create(['name' => $faker->word]);
+
+        $subCategory1 = SubCategory::create(['name' => $faker->word, 'category_id' => $category1->id]);
+        $subCategory2 = SubCategory::create(['name' => $faker->word, 'category_id' => $category1->id]);
+
+        $subCategory3 = SubCategory::create(['name' => $faker->word, 'category_id' => $category2->id]);
+        $subCategory4 = SubCategory::create(['name' => $faker->word, 'category_id' => $category2->id]);
+
+        // After categories, well, we have items
+        // Let's create two items each for sub-category 2 and 4
+        $item1 = Item::create([
+            'sub_category_id' => 2,
+            'name' => $faker->name,
+            'description' => $faker->text,
+            'type' => $faker->word,
+            'price' => $faker->randomNumber(2),
+            'quantity_in_stock' => $faker->randomNumber(2),
+        ]);
+
+        $item2 = Item::create([
+            'sub_category_id' => 2,
+            'name' => $faker->name,
+            'description' => $faker->text,
+            'type' => $faker->word,
+            'price' => $faker->randomNumber(3),
+            'quantity_in_stock' => $faker->randomNumber(2),
+        ]);
+
+        $item3 = Item::create([
+            'sub_category_id' => 4,
+            'name' => $faker->name,
+            'description' => $faker->text,
+            'type' => $faker->word,
+            'price' => $faker->randomNumber(4),
+            'quantity_in_stock' => $faker->randomNumber(2),
+        ]);
+
+        $item4 = Item::create([
+            'sub_category_id' => 4,
+            'name' => $faker->name,
+            'description' => $faker->text,
+            'type' => $faker->word,
+            'price' => $faker->randomNumber(1),
+            'quantity_in_stock' => $faker->randomNumber(3),
+        ]);
+
+        // Now that we have users and items, let's make user1 place a couple of orders
+        $order1 = Order::create([
+            'status' => 'confirmed',
+            'total_value' => $faker->randomNumber(3),
+            'taxes' => $faker->randomNumber(1),
+            'shipping_charges' => $faker->randomNumber(2),
+            'user_id' => $user1->id
+        ]);
+
+        $order2 = Order::create([
+            'status' => 'waiting',
+            'total_value' => $faker->randomNumber(3),
+            'taxes' => $faker->randomNumber(1),
+            'shipping_charges' => $faker->randomNumber(2),
+            'user_id' => $user1->id
+        ]);
+
+        // now, assigning items to orders
+        $order1->items()->attach($item1);
+        $order1->items()->attach($item2);
+        $order1->items()->attach($item3);
+        
+        $order2->items()->attach($item1);
+        $order2->items()->attach($item4);
+
+        // and finally, create invoices
+        $invoice1 = Invoice::create([
+            'raised_at' => $faker->dateTimeThisMonth(),
+            'status' => 'settled',
+            'totalAmount' => $faker->randomNumber(3),
+            'order_id' => $order1->id,
+        ]);
+    }
+}
+
+
+php artisan migrate:fresh --seed
+
+set up the database again and seed it
+
+php artisan migrate:fresh --seed
+
+php artisan tinker
+
+>>> $order = Order::find(1);
+[!] Aliasing 'Order' to 'App\Models\Order' for this Tinker session.
+=> App\Models\Order {#4108
+     id: 1,
+     status: "confirmed",
+     total_value: 320,
+     taxes: 5,
+     shipping_charges: 12,
+     user_id: 1,
+   }
+>>> $order->invoice
+=> App\Models\Invoice {#4004
+     id: 1,
+     raised_at: "2021-01-21 19:20:31",
+     status: "settled",
+     totalAmount: 314,
+     order_id: 1,
+   }
+
+$invoice = Invoice::find(1);
+[!] Aliasing 'Invoice' to 'App\Models\Invoice' for this Tinker session.
+=> App\Models\Invoice {#3319
+     id: 1,
+     raised_at: "2021-01-21 19:20:31",
+     status: "settled",
+     totalAmount: 314,
+     order_id: 1,
+   }
+>>> $invoice->order
+=> App\Models\Order {#4042
+     id: 1,
+     status: "confirmed",
+     total_value: 320,
+     taxes: 5,
+     shipping_charges: 12,
+     user_id: 1,
+   }
+
+>>> User::find(1)->orders;
+[!] Aliasing 'User' to 'App\Models\User' for this Tinker session.
+=> Illuminate\Database\Eloquent\Collection {#4291
+     all: [
+       App\Models\Order {#4284
+         id: 1,
+         status: "confirmed",
+         total_value: 320,
+         taxes: 5,
+         shipping_charges: 12,
+         user_id: 1,
+       },
+       App\Models\Order {#4280
+         id: 2,
+         status: "waiting",
+         total_value: 713,
+         taxes: 4,
+         shipping_charges: 80,
+         user_id: 1,
+       },
+     ],
+   }
+>>> Order::find(1)->user
+=> App\Models\User {#4281
+     id: 1,
+     name: "Dallas Kshlerin",
+   }
+
+>>> $item1 = Item::find(1);
+[!] Aliasing 'Item' to 'App\Models\Item' for this Tinker session.
+=> App\Models\Item {#4253
+     id: 1,
+     name: "Russ Kutch",
+     description: "Deserunt voluptatibus omnis ut cupiditate doloremque. Perspiciatis officiis odio et accusantium alias aut. Voluptatum provident aut ut et.",
+     type: "adipisci",
+     price: 26,
+     quantity_in_stock: 65,
+     sub_category_id: 2,
+   }
+>>> $order1 = Order::find(1);
+=> App\Models\Order {#4198
+     id: 1,
+     status: "confirmed",
+     total_value: 320,
+     taxes: 5,
+     shipping_charges: 12,
+     user_id: 1,
+   }
+>>> $order1->items
+=> Illuminate\Database\Eloquent\Collection {#4255
+     all: [
+       App\Models\Item {#3636
+         id: 1,
+         name: "Russ Kutch",
+         description: "Deserunt voluptatibus omnis ut cupiditate doloremque. Perspiciatis officiis odio et accusantium alias aut. Voluptatum provident aut ut et.",
+         type: "adipisci",
+         price: 26,
+         quantity_in_stock: 65,
+         sub_category_id: 2,
+         pivot: Illuminate\Database\Eloquent\Relations\Pivot {#4264
+           order_id: 1,
+           item_id: 1,
+         },
+       },
+       App\Models\Item {#3313
+         id: 2,
+         name: "Mr. Green Cole",
+         description: "Maxime beatae porro commodi fugit hic. Et excepturi natus distinctio qui sit qui. Est non non aut necessitatibus aspernatur et aspernatur et. Voluptatem possimus consequatur exercitationem et.",
+         type: "pariatur",
+         price: 381,
+         quantity_in_stock: 82,
+         sub_category_id: 2,
+         pivot: Illuminate\Database\Eloquent\Relations\Pivot {#4260
+           order_id: 1,
+           item_id: 2,
+         },
+       },
+       App\Models\Item {#4265
+         id: 3,
+         name: "Brianne Weissnat IV",
+         description: "Delectus ducimus quia voluptas fuga sed eos esse. Rerum repudiandae incidunt laboriosam. Ea eius omnis autem. Cum pariatur aut voluptas sint aliquam.",
+         type: "non",
+         price: 3843,
+         quantity_in_stock: 26,
+         sub_category_id: 4,
+         pivot: Illuminate\Database\Eloquent\Relations\Pivot {#4261
+           order_id: 1,
+           item_id: 3,
+         },
+       },
+     ],
+   }
+>>> $item1->orders
+=> Illuminate\Database\Eloquent\Collection {#4197
+     all: [
+       App\Models\Order {#4272
+         id: 1,
+         status: "confirmed",
+         total_value: 320,
+         taxes: 5,
+         shipping_charges: 12,
+         user_id: 1,
+         pivot: Illuminate\Database\Eloquent\Relations\Pivot {#4043
+           item_id: 1,
+           order_id: 1,
+         },
+       },
+       App\Models\Order {#4274
+         id: 2,
+         status: "waiting",
+         total_value: 713,
+         taxes: 4,
+         shipping_charges: 80,
+         user_id: 1,
+         pivot: Illuminate\Database\Eloquent\Relations\Pivot {#4257
+           item_id: 1,
+           order_id: 2,
+         },
+       },
+     ],
+   }
+
+>>> use DB;
+>>> DB::table('item_order')->select('*')->get();
+=> Illuminate\Support\Collection {#4290
+     all: [
+       {#4270
+         +"order_id": 1,
+         +"item_id": 1,
+       },
+       {#4276
+         +"order_id": 1,
+         +"item_id": 2,
+       },
+       {#4268
+         +"order_id": 1,
+         +"item_id": 3,
+       },
+       {#4254
+         +"order_id": 2,
+         +"item_id": 1,
+       },
+       {#4267
+         +"order_id": 2,
+         +"item_id": 4,
+       },
+     ],
+   }
+
+https://geekflare.com/laravel-eloquent-model-relationship/
+
+
+https://www.essentialsql.com/get-ready-to-learn-sql-database-normalization-explained-in-simple-english/
+
+========
+
+After accessing this relationship, we may access the intermediate table using the pivot attribute on the models:
+
+use App\Models\User;
+
+$user = User::find(1);
+
+foreach ($user->roles as $role) {
+    echo $role->pivot->created_at;
+}
+
+users
+roles
+user_role
+
+Migrations
+
+        Schema::create('users', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('email')->unique();
+            $table->timestamp('email_verified_at')->nullable();
+            $table->string('password');
+            $table->rememberToken();
+            $table->foreignId('current_team_id')->nullable();
+            $table->text('profile_photo_path')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('roles', function (Blueprint $table) {
+            $table->id();
+            $table->string('name'); // edit posts
+            $table->string('slug'); //edit-posts
+            $table->timestamps();
+        });
+
+        Schema::create('user_role', function (Blueprint $table) {
+           $table->foreignId('user_id')->constrained()->onDelete('cascade');
+           $table->foreignId('role_id')->constrained()->onDelete('cascade');
+           $table->primary(['user_id','role_id']);
+        });
+
+Models
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Role extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'name',
+        'slug',
+    ];
+
+    public function permissions() {
+       return $this->belongsToMany(Permission::class,'role_permission');       
+    }
+
+    public function users() {
+       return $this->belongsToMany(User::class,'user_role');       
+    }
+
+}
+
+

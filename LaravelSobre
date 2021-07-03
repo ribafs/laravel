@@ -1,0 +1,586 @@
+Programação mais produtiva e melhor com grande facilidade
+
+O Laravel colabora para que o programador se torne mais produtivo e um melhor programador, por lidar com bons recursos de programação: OOP, MVC, desacoplamento, padrões de projeto, boas práticas, boas convenções, estes, injeção de depepndência, migrations, ORM e mais.
+
+Ciclo de vida das requisições e Service Container
+
+Scripts simples em PHP acessam URI diretamente. Exemplo: http://localhost/clients/exemplo.php. Se clients fosse uma aplicação laravel, ninguém poderia acessar diretamente exemplo.php. Tudo precisa começar em public/index.php.
+
+O diretório public/ deve atuar como o raiz do aplicativo; em outras palavras, o diretório no qual seu servidor web começa a cuidar de cada solicitação recebida.
+Uma vez que a reescrita de URL é configurada corretamente, cada request/solicitação que não corresponde a um existente arquivo ou diretório acessa o arquivo /public/index.php. Este arquivo inclui o Composer autoloader, que carrega as dependências (incluindo os componentes do framework Laravel) e também onde procurar o código do seu aplicativo. Seu aplicativo é em seguida, inicializado, carregando variáveis de configuração com base no ambiente. Uma vez que isso é feito, ele instancia uma nova instância do contêiner de serviço, que por sua vez lida com a solicitação de entrada, usa o método HTTP e o URL usado para acessar o aplicativo (como POST / comentários) e passa a solicitação para a ação correta do controlador ou rota para manuseio.
+
+O service container do Laravel é uma ferramenta poderosa para gerenciar dependências de classes e executar injeção de dependências. Injeção de dependência  essencialmente significa: dependências de classe são "injetadas" na classe por meio do construtor ou, em alguns casos, nos métodos "setter".
+
+A maioria das dependências do Laravel são injetadas no service container quando este é inicializado.
+
+Muitas das bibliotecas da pasta vendor vem com um arquivo README.md que explica sobre elas.
+
+ProjetoAdd
+
+Definir os requisitos do banco com cautela. Criar o banco com esquemas (PostgreSQL), tabelas, campos, tamanhos e tipos, constraints e relacionamentos. Ao final idealmente popule com massa de testes para ver o funcionamento e gere um DER usando o dbVisualizer. 
+Definir os requisitos do aplicativo para cada parte: rotas, models, controllers e actions, views, etc e ao final capture as telas ou crie gráficos de como as deseja.
+
+Relacionamentos Eloquent
+
+Podemos especificar orderBy diretamente nos relacionamentos
+
+public function products()
+{
+    return $this->hasMany(Product::class);
+}
+
+public function productsByName()
+{
+    return $this->hasMany(Product::class)->orderBy('name');
+}
+
+Usar Eloquent com has() em duas camadas de profundidade
+
+// Author -> hasMany(Book::class);
+// Book -> hasMany(Rating::class);
+$authors = Author::has('​ books.ratings​ ')->get();
+
+Em relacionamentos hasMany
+
+// Author -> hasMany(Book::class)
+$authors = Author::has('books', '>', 5)->get();
+
+Podemos passar campos em all():
+
+$users = User::all(['id', 'name', 'email']);
+
+
+Mudando nomes de campos
+
+$users = DB::table('users')
+->select('name', 'email_from_user as email')
+->get();
+
+
+dd mais conveniente
+
+Ao invés de executar​ 
+
+dd($result);​
+
+Podemos adicionar​ ->dd()​ para métodos diretamente
+
+$users = User::where('name', 'Taylor')->get()->dd();
+
+Eloquent sentenças ou em qualquer Collection.
+
+
+Mensagens de erro curtomizadas
+
+Por campo, ​rule​ e language. 
+Crie o arquivo
+
+resources/lang/pt-br/validation.php
+
+Com o array apropriado
+
+'custom' => [
+    'email' => [
+        'required' => 'O campo e-mail é obrigatório!',
+    ],
+],
+
+O idioma pt-br deve ser adicionado em config/app.php em
+    'locale' => 'pt-br',
+    'locale' => 'en',
+
+Nunca rode composer update em produção.
+Sempre rode composer update localmente, faça commit do composer.lock para o repositório do aplicativo em produção
+Então execute em produção: composer install
+
+Valor Default para Timestamp
+
+Irá setar o​ CURRENT_TIMESTAMP​ como valor default
+
+$table->timestamp('created_at')->useCurrent();
+$table->timestamp('updated_at')->useCurrent();
+
+Views - páginas de erro
+
+Para criar uma página para erros, apenas crie
+
+resources/views/errors/500.blade.php
+resources/views/errors/404.blade.php
+
+Auth na Blade
+
+@if(auth()->user())
+// The user is authenticated.
+@endif
+
+@auth
+// The user is authenticated.
+@endauth
+
+The opposite is ​ @guest​ directive.
+@guest
+// The user is not authenticated.
+@endguest
+
+Ordem de execução das migrations
+
+Caso deseje alterar a ordem de execução das migrations apenas as renomeie
+
+2020_08_04_070443_create_posts_table.php​ para
+2020_07_04_070443_create_posts_table.php​ (alterada de 2020_08_04 ​para
+2020_07_04). Serão executadas em ordem alfabética
+
+Blade
+
+Checar se a entrada atual é a primeira ou a última
+
+@foreach ($users as $user)
+    @if ($loop->first)
+        This is the first iteration.
+    @endif
+    @if ($loop->last)
+        This is the last iteration.
+    @endif
+    <p>This is user {{ $user->id }}</p>
+@endforeach
+
+loop em dois níveis
+
+@foreach ($users as $user)
+    @foreach ($user->posts as $post)
+        @if ($loop->parent->first)
+            This is first iteration of the parent loop.
+        @endif
+    @endforeach
+@endforeach
+
+Outras propriedades parecidas
+
+https://laravel.com/docs/master/blade#the-loop-variable
+
+
+Migrations (laravel 7)
+
+Novos métodos nas FK
+
+// Before Laravel 7
+Schema::table('posts', function (Blueprint $table)) {
+    $table->unsignedBigInteger('user_id');
+    $table->foreign('user_id')->references('id')->on('users');
+}
+// From Laravel 7
+Schema::table('posts', function (Blueprint $table)) {
+    $table->foreignId('user_id')->constrained();
+}
+// Or, if your field is different from the table reference
+Schema::table('posts', function (Blueprint $table)) {
+    $table->foreignId('created_by_id')->references('id')->on('users');
+}
+
+Collections
+
+$users = User::all();
+echo 'Max ID: ' . $users->max('id');
+echo 'Average age: ' . $users->avg('age');
+echo 'Total budget: ' . $users->sum('budget');
+
+
+Notificações
+
+Send Notifications to Anyone
+You can send Laravel Notifications not only to a certain user with
+$user->notify()​ , but also to anyone you want, via ​ Notification::route()​ , with
+so-called "on-demand" notifications:
+Notification::route('mail', 'taylor@example.com')
+->route('nexmo', '5555555555')
+->route('slack',
+'https://hooks.slack.com/services/...')
+->notify(new InvoicePaid($invoice));
+
+
+Localization
+
+Auto-Capitalize Translations
+In translation files (​ resources/lang​ ), you can specify variables not only as
+:variable​ , but also capitalized as ​ :VARIABLE​ or ​ :Variable​ - and then whatever
+value you pass - will be also capitalized automatically.
+// resources/lang/en/messages.php
+'welcome' => 'Welcome, :Name'
+// Result: "Welcome, Taylor"
+echo __('messages.welcome', ['name' => 'taylor']);
+
+
+Validação com condição
+
+Validation Rule with Some Conditions
+If your validation rules depend on some condition, you can modify the rules by
+adding ​ withValidator()​ to your F
+ormRequest​ class, and specify your custom
+logic there. Like, if you want to add validation rule only for some user role.
+use Illuminate\Validation\Validator;
+class StoreBlogCategoryRequest extends FormRequest {
+    // ...
+    public function withValidator(Validator $validator) {
+        if (auth()->user()->is_admin) {
+            $validator->addRules([
+                'some_secret_password' => 'required'
+            ]);
+        }
+    }
+}
+
+
+Recebendo a mensagem exata do DB error
+
+Exact DB Error
+If you want to catch Eloquent Query exceptions, use specific ​ QueryException
+instead default Exception class, and you will be able to get the exact SQL code of the
+error.
+try {
+// Some Eloquent/SQL statement
+} catch (\Illuminate\Database\QueryException $e) {
+if ($e->getCode() === '23000') { // integrity constraint violation
+return back()->withError('Invalid data');
+}
+}
+
+Rotas
+
+parâmetros
+
+Add Parameters to Routes
+If you pass additional parameters to the route, in the array, those key / value pairs
+will automatically be added to the generated URL's query string.
+Route::get('user/{id}/profile', function ($id) {
+//
+})->name('profile');
+$url = route('profile', ['id' => 1, 'photos' => 'yes']);
+// Result: /user/1/profile?photos=yes
+
+
+Blade
+
+@auth
+// The user is authenticated...
+@endauth
+@guest
+// The user is not authenticated...
+@endguest
+
+
+Modo de manutenção
+
+Maintenance Mode
+If you want to enable maintenance mode on your page, execute the down Artisan
+command:
+php artisan down
+Then people would see default 503 status page.
+You may also provide flags:
+- message that would be shown
+- retry page reload every X seconds
+- still allow the access to some IP address
+php artisan down --message="Upgrading Database" --retry=60
+--allow=127.0.0.1
+When you've done the maintenance work, just run
+php artisan up
+
+
+
+Rota de fallback
+
+Caso queira usar uma rota no lugar de uma mensagem de 404
+
+Route::fallback(function() {
+    return '<h2>O que você está fazendo aqui?<br>Esta página não exists!</h2>';
+});
+
+Composer
+
+Checar existência de dependências desatualizadas
+
+cd projeto
+composer outdated
+
+Redirect
+
+Redirecionar para um específico action/método de um controller
+
+return redirect()->action('SomeController@method', ['param' => $value]);
+
+Checar a data/hora com Eloquent
+
+Com Eloquent, cheque a data com as funções whereDay(),​ whereMonth(),​ whereYear()​, whereDate()​ e ​ whereTime().
+
+$products = Product::whereDate('created_at', '2020-01-31')->get();
+$products = Product::whereMonth('created_at', '12')->get();
+$products = Product::whereDay('created_at', '31')->get();
+$products = Product::whereYear('created_at', date('Y'))->get();
+$products = Product::whereTime('created_at', '=', '14:13:58')->get();
+
+Incremento e decremento
+
+Post::find($post_id)->increment('view_count'); // incrementa 1
+User::find($user_id)->increment('points', 50); // Incrementa 50
+
+Rotas
+
+Traduzir uma rota resources um várias rotas, como no exemplo ...
+Incluir em rotas: agrupamento, nomeadas, parãmetros, etc
+
+Criar grupo de rotas e aplicar um middleware apenas uma rota interna:
+
+Route::group(['prefix' => 'admin', 'as' => 'admin.'], function() {
+    Route::get('login', 'AdminController@login');
+    Route::get('register', 'AdminController@register');
+
+    Route::group(['middleware' => 'auth'], function() {
+        Route::get('edit', 'AdminController@edit');
+    });
+});
+
+Codando
+- Exemplo exibindo string
+- Exemplo chamando controller/action e este mostrando string
+- Exemplo chamando controller/action e este chamando view e esta mostrando string
+- redirect
+- File
+- String - Str singular, plural
+
+Por que não usar a tag de fechamento do script, quando é somente PHP?
+
+Bem, omitir a tag de fechamento é apenas uma solução para evitar espaços em branco e outros caracteres no final do arquivo. Por exemplo, qualquer caractere acidentalmente adicionado atrás da tag de fechamento acionaria um erro ao tentar modificar as informações do cabeçalho posteriormente.
+
+Remover a tag de fechamento é uma espécie de "boa prática" referindo-se a muitas diretrizes de codificação.
+https://stackoverflow.com/questions/3219383/why-do-some-scripts-omit-the-closing-php-tag
+
+
+
+Importância do Artisan
+
+make
+- model
+- controller
+- migration
+- provider
+- middleware
+- request
+- command
+- event
+- policy
+- seeder
+
+
+Ver os parâmetros de cada um
+
+php artisan -V
+php artisan route:list
+up
+down
+optimize
+help
+env
+help
+list
+migrate
+serve
+php artisan storage:link
+
+clear: cache, view, route, ...
+db:seed
+
+
+No Linux
+
+php artisan route:list | grep livewire
+
+No Windows
+
+php artisan route:list | findstr /C:"[livewire]":
+
+Adicionar: ?
+- e-mail
+- queue
+- carbon
+$now = new Carbon();
+$yesterday = Carbon::yesterday();
+
+Migrations
+- novos métodos
+- principais tipos de campos
+- tabela
+- add campo
+- del campo
+- alter table
+
+Para FK use unsignedInteger() ou integer()->unsigned() ao invés de integer()
+
+Use unsignedBigInteger()​ se a outra coluna é ​ bigInteger()
+
+Eloquent
+
+Receber
+
+all() - recebe todos os registros
+
+find(1) - recebe somente um, que tem a PK id igual a 1
+
+where('id', '=', ')->first();
+
+where('gender', '=', 'Male')
+    ->where('birth_date', '>', '2000-05-04')
+    ->all();
+
+where('gender', '=', 'Female')->take(5)->get();
+
+where('gender', '=','Female')->take(5)->skip(10)->get();
+... OFFSET 10 LIMIT 5;
+
+Pesquisar e testar os métodos tak() e skip()
+
+Salvar
+
+$data = [
+    'name' => 'Ribamar FS',
+    'birth_date' => '1956-08-03',
+    'user_id' => 1,
+];
+
+$client>create($data);
+
+User::forceCreate([
+    'first_name'=> 'John',
+    'last_name' => 'Doe',
+    'email' => 'john.doe@example.com',
+    'password' => bcrypt('changeme'),
+]);
+
+$user->update([
+    'password' => bcrypt('my_new_password'),
+]);
+
+Excluir
+
+$client = Client::find(1);
+$client->delete();
+
+User::where('age', '<', 21)->delete();
+
+Uso de middlewares
+
+- em rotas
+- em controllers
+
+Segurança Add
+
+Recomendar SSL/HTTPS
+
+Criar tutorial simples sobre commands
+Pesquisar schedule para commands
+
+
+E-mail
+
+.env
+
+MAIL_DRIVER=smtp
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=yourEmail@gmail.com
+MAIL_PASSWORD=yourPassword
+MAIL_ENCRYPTION=tls
+
+Enviar
+
+$variable = 'Hello world!'; // A variable which can be use inside email blade template.
+Mail::send('your.blade.file', ['variable' => $variable], function ($message) {
+$message->from('john@doe.com');
+$message->sender('john@doe.com');
+$message->to(foo@bar.com);
+$message->subject('Hello World');
+});
+
+Conexão com vários SGBDs. No config/database.php
+
+Remove the public from url
+1. Renaming the server.php to index.php
+2. Copy the .htaccess from public folder to root folder
+3. Changing .htaccess a bit as follows for statics:
+
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)/$ /$1 [L,R=301]
+RewriteCond %{REQUEST_URI} !(\.css|\.js|\.png|\.jpg|\.gif|robots\.txt)$ [NC]
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.php [L]
+
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_URI} !^/public/
+RewriteRule ^(css|js|images)/(.*)$ public/$1/$2 [L,NC]
+
+Referências
+
+### Livros
+ 	
+- Laravel para ninjas da Novatec - https://novatec.com.br/livros/laravel-para-ninjas/
+
+- Laravel 5 Essentials - Martin Bean da PacktPub
+
+
+
+Referências
+
+TRAZER PARTE DO REFERENCIAS DO REPOSITIORIO LARAVEL E LARAVEL8
+
+- https://www.itsolutionstuff.com/laravel-tutorial
+- https://laraveldaily.com/free-e-book-40-laravel-quick-tips-and-counting/
+- https://www.itsolutionstuff.com/post/laravel-8-crud-application-tutorial-for-beginnersexample.html
+- https://www.itsolutionstuff.com/post/laravel-8-livewire-crud-with-jetstream-tailwind-cssexample.html
+- https://www.itsolutionstuff.com/post/laravel-6-file-upload-tutorial-exampleexample.html
+- https://www.itsolutionstuff.com/post/laravel-6-multiple-image-upload-tutorialexample.html
+- https://www.itsolutionstuff.com/post/laravel-6-clear-cache-of-route-view-config-commandexample.html
+- https://www.itsolutionstuff.com/post/laravel-eloquent-relationships-tutorial-from-scratchexample.html
+- https://www.itsolutionstuff.com/post/laravel-6-email-verification-tutorialexample.html
+- https://www.itsolutionstuff.com/post/laravel-5-localizationtrans-helper-tutorial-exampleexample.html
+- https://www.itsolutionstuff.com/post/how-to-send-mail-in-laravel-6example.html
+- https://www.itsolutionstuff.com/post/how-to-create-404-error-page-in-laravel-58example.html
+- https://www.itsolutionstuff.com/post/laravel-6-flash-message-tutorialexample.html
+- https://www.itsolutionstuff.com/post/how-to-use-sweetalert-message-box-in-laravel-5example.html
+- https://www.itsolutionstuff.com/post/laravel-57-comment-system-tutorial-from-scratchexample.htm
+- https://www.itsolutionstuff.com/post/how-to-change-column-name-and-data-type-in-laravel-migrationexample.html
+- https://www.itsolutionstuff.com/post/how-to-remove-column-from-table-in-laravel-migrationexample.html
+- https://www.itsolutionstuff.com/post/how-to-change-table-name-using-laravel-migrationexample.html
+- https://www.itsolutionstuff.com/post/how-to-add-new-column-in-existing-table-in-laravel-migrationexample.html
+- https://www.itsolutionstuff.com/post/laravel-6-generate-pdf-file-tutorialexample.html
+- https://www.itsolutionstuff.com/post/laravel-one-to-one-eloquent-relationship-tutorialexample.html
+- https://www.itsolutionstuff.com/post/laravel-one-to-many-eloquent-relationship-tutorialexample.html
+- https://www.itsolutionstuff.com/post/laravel-many-to-many-eloquent-relationship-tutorialexample.html
+- https://www.itsolutionstuff.com/post/laravel-has-many-through-eloquent-relationship-tutorialexample.html
+- https://www.itsolutionstuff.com/post/laravel-6-admin-panel-tutorialexample.html
+
+
+IDEIAS
+
+- Criar commando instalador de aplicativos, que recebe:
+
+- Nome
+- Sobrenome
+- email
+- senha
+- sgbd default mysql
+- porta - default 3306
+- banco
+- user - default root
+- senha - default em branco
+
+Outros dados
+
+
+Adicionar
+
+Usando o git no VSCode
+
+Uso misto no VSCode e suas ferramentas e no terminal integrado
+
+
