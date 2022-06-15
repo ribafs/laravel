@@ -1,0 +1,10 @@
+Usar um comando para chamar outros comandos artisan
+
+use Illuminate\Support\Facades\Artisan;
+
+Artisan::call('some:command');
+    Artisan::call('list');
+    Artisan::call('config:clear');
+    \Artisan::call('migrate');
+    dd(Artisan::output());
+

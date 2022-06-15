@@ -1,8 +1,0 @@
-Factory
-
-Um factory depende de um model.
-
-php artisan tinker
-User::factory()->count(1000)->create();
-
-Product::factory()->count(1000)->create();

@@ -1,0 +1,35 @@
+    $defaultIndex = 1;
+
+    $name = $this->choice(
+    'Quan o seu nome?',
+    ['Ribamar', 'Tiago'],
+    $defaultIndex,
+    $maxAttempts = null,
+    $allowMultipleSelections = true
+);
+
+$this->info('The command was successful!');
+
+$this->error('Something went wrong!');
+
+$this->line('Display this on the screen');
+
+Tabelas
+
+use App\Models\User;
+ 
+$this->table(
+    ['Name', 'Email'],
+    User::all(['name', 'email'])->toArray()
+);
+
+
+Array de inputs
+
+$input['name'] = $this->ask('What is your name?');
+$input['email'] = $this->ask('What is your email address?');
+$input['password'] = $this->ask('Provide your secret password?');
+$input['password'] = Hash::make($input['password']);
+User::create($input);
+​
+$this->info("User created successfully");

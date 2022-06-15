@@ -1,9 +1,5 @@
 # Criar um factory para popular uma tabela com um seeder
 
-php artisan tinker
-
-User::factory()->count(100)->create()
-
 ## Criar migration para contatos
 
 php artisan make:migration create_contatos_table --create=contatos

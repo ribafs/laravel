@@ -1,0 +1,151 @@
+Laravel Console Menu
+
+Criar menus bonitos e coloridos para o terminal do Laravel
+
+Requisitos
+PHP 7.2.5+
+
+Instalar
+composer require nunomaduro/laravel-console-menu
+
+Exemplo simples
+
+php artisan make:command MenuCommand
+
+<?php
+namespace App\Console\Commands;
+
+use Illuminate\Console\Command;
+class MenuCommand extends Command
+{
+    protected $signature = 'laravel:menu';
+    protected $description = 'Meu primeiro menu';
+
+    public function handle()
+    {
+        $option = $this->menu('Título do menu', [
+            'Opção 1',
+            'Opção 2',
+            'Opção 3',
+        ])->open();
+
+		if($option){
+        	$this->info("Você escolheu a opção número #$option");
+        }else{
+        	$this->info("Você escolheu sair");
+        }
+    }
+}
+
+Setando a largura e com um inputBox
+
+    public function handle()
+    {
+        $option = $this->menu('Título do menu')
+                    ->addOption('variavel1', 'Texto 1')
+                    ->addOption('variavel2', 'Texto 2')
+                    ->addOption('variavel3', 'Texto 3')
+                    ->addQuestion('Título da pergunta', 'Pergunta...') // Esta abre uma  inputBox para o usuário digitar algo, que será retornado como variável
+                    ->setWidth(80)
+                    ->open();
+        
+        $this->info("Você escolheu a pção: $option");
+    }
+    
+Opção com senha
+
+Adicionar
+use PhpSchool\CliMenu\CliMenu;
+
+    public function handle()
+    {
+        $menu = $this->menu('Pizza menu')
+                    ->addOption('mozzarella', 'Mozzarella')
+                    ->addOption('chicken_parm', 'Chicken Parm')
+                    ->addOption('sausage', 'Sausage')
+                    ->addQuestion('Make your own', 'Describe your pizza...');
+        
+        $itemCallable = function (CliMenu $cliMenu) use ($menu) {
+            $cliMenu->askPassword()
+                ->setValidator(function ($password) {
+                    return $password === 'secret';
+                })
+                ->setPromptText('Secret password?')
+                ->ask();
+
+            $menu->setResult('Free spice!');
+            $cliMenu->close();
+        };
+        $menu->addItem('Add extra spice for free (password needed)', $itemCallable);
+
+        $option = $menu->addOption('burger', 'Prefer burgers')
+            ->setWidth(80)
+            ->open();
+
+        $this->info("You have chosen the text option: $option");
+    }
+
+
+Available colors: black, red, green, yellow, blue, magenta, cyan, white.
+
+  $this->menu($title, $options)
+      ->setForegroundColour('green')
+      ->setBackgroundColour('black')
+      ->setWidth(200)
+      ->setPadding(10)
+      ->setMargin(5)
+      ->setExitButtonText("Abort") // remove exit button with ->disableDefaultItems()
+      ->setTitleSeparator('*-')
+      ->addLineBreak('<3', 2)
+      ->addStaticItem('AREA 2')
+      ->open();
+      
+Documentação completa
+https://github.com/php-school/cli-menu/blob/master/README.md      
+
+Ascii Art
+
+<?php
+namespace App\Console\Commands;
+
+use Illuminate\Console\Command;
+use PhpSchool\CliMenu\CliMenu;
+use PhpSchool\CliMenu\Builder\CliMenuBuilder;
+
+class MenuCommand extends Command
+{
+    protected $signature = 'laravel:menu';
+    protected $description = 'Meu primeiro menu';
+
+    public function handle()
+    {
+$art = <<<ART
+        _ __ _
+       / |..| \
+       \/ || \/
+        |_''_|
+      Larqavel 9
+   Para Iniciantes
+ART;
+
+		$itemCallable = function (CliMenu $menu) {
+			echo $menu->getSelectedItem()->getText();
+		};
+
+		$menu = (new CliMenuBuilder)
+			->addAsciiArt($art)
+			->addLineBreak("=")
+			->addItem('First Item', $itemCallable)
+			->addItem('Second Item', $itemCallable)
+			->addLineBreak('-')
+			->setWidth(70)
+			->setBackgroundColour('green')
+			->build();
+
+		$menu->open();
+    }
+}
+      
+https://github.com/nunomaduro/laravel-console-menu
+
+              

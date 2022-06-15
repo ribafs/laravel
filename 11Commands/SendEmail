@@ -1,0 +1,46 @@
+php artisan make:command SendEmails
+
+Command Structure
+
+After generating your command, you should define appropriate values for the signature and description properties of the class. These properties will be used when displaying your command on the list screen. The signature property also allows you to define your command's input expectations. The handle method will be called when your command is executed. You may place your command logic in this method.
+
+Let's take a look at an example command. Note that we are able to request any dependencies we need via the command's handle method. The Laravel service container will automatically inject all dependencies that are type-hinted in this method's signature:
+
+<?php
+ 
+namespace App\Console\Commands;
+ 
+use App\Models\User;
+use App\Support\DripEmailer;
+use Illuminate\Console\Command;
+ 
+class SendEmails extends Command
+{
+    /**
+     * The name and signature of the console command.
+     *
+     * @var string
+     */
+    protected $signature = 'mail:send {user}';
+ 
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'Send a marketing email to a user';
+ 
+    /**
+     * Execute the console command.
+     *
+     * @param  \App\Support\DripEmailer  $drip
+     * @return mixed
+     */
+    public function handle(DripEmailer $drip)
+    {
+        $drip->send(User::find($this->argument('user')));
+    }
+}
+
+https://laravel.com/docs/9.x/artisan#tinker
+
